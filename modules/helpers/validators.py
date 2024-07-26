@@ -7,7 +7,7 @@ class ColumnTypeValidators:
     def is_column_exists(func):
         @wraps(func)
         def wrapper(self, df, column, *args, **kwargs):
-            if column not in dataframe.columns:
+            if column not in df.columns:
                 raise ValueError(f"Column '{column}' not found in DataFrame.")
             return func(self, df, column, *args, **kwargs)
         return wrapper
