@@ -3,6 +3,8 @@ import numpy as np
 from datetime import datetime
 from typing import Union
 from enum import Enum 
+from modules.helpers.validators import ColumnTypeValidators
+
 
 class MissingValueHandler:
     """Analyse And Handle Missing Values With Veraious Methods"""
@@ -63,18 +65,15 @@ class MissingValueHandler:
         return df_copy
     
     
+    @ColumnTypeValidators.numeric_required
     def replace_mean(self, dataframe: pd.DataFrame, column: Union[int, str]) -> pd.DataFrame:
         df_copy = dataframe.copy()
-        if pd.api.types.is_numeric_dtype(df_copy[column]):
-            mean_value = df_copy[column].mean()
-            df_copy[column] = df_copy[column].fillna(mean_value)
-        else:
-            raise ValueError(f"Column '{column}' is not numeric. Skipping mean replacement...")
+        mean_value = df_copy[column].mean()
+        df_copy[column] = df_copy[column].fillna(mean_value)
         return df_copy
 
+    @ColumnTypeValidators.numeric_required
     def replace_median(self, dataframe: pd.DataFrame, column: Union[int, str]) -> pd.DataFrame:
-        assert pd.api.types.is_numeric_dtype(dataframe[column]), f"Column '{column}' is not numeric. Skipping median replacement."
-
         df_copy = dataframe.copy()
         median_value = df_copy[column].median()
         df_copy[column] = df_copy[column].fillna(median_value)
@@ -109,10 +108,8 @@ class MissingValueHandler:
         df_copy[column] = df_copy[column].fillna(method)
         return df_copy
 
+    @ColumnTypeValidators.is_column_exists
     def replace_missing_values(self, dataframe: pd.DataFrame, strategy: Strategy = Strategy.MEAN, column: Union[int, str] = 0, const : Union[int, str, datetime] = np.nan) -> pd.DataFrame:
-        if column not in dataframe.columns:
-            raise ValueError(f"Column '{column}' not found in DataFrame.")
-
         if strategy == self.Strategy.MODE:
             return self.replace_mode(dataframe, column)
         elif strategy == self.Strategy.MEAN:
