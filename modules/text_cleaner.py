@@ -6,6 +6,7 @@ from enum import Enum
 
 class TextCleaner:
     class RegexPatterns(Enum):
+        MULTI_BLANK_CHARACTERS = r'\s{2,}'
         PUNCTUATION = r'[^\w\s]'
         EMAIL = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         URL = r'^(https?|ftp)://[^\s/$.?#].[^\s]*$'
