@@ -22,9 +22,9 @@ class TextCleaner:
 
 
     def __init__(self) -> None:
+        """"""
         pass
     
-    @ColumnTypeValidators.is_column_exists
     @ColumnTypeValidators.string_required
     def remove_repetitive_words(self, dataframe: pd.DataFrame, column: Union[str, int]) -> pd.DataFrame:
         def remove_duplicates(text):
@@ -43,17 +43,15 @@ class TextCleaner:
         df_copy[column] = df_copy[column].apply(remove_duplicates)
         return df_copy
 
-    @ColumnTypeValidators.is_column_exists
     @ColumnTypeValidators.string_required
-    def replace_regex(dataframe: pd.DataFrame, column: Union[str, int], regex:Union[RegexPatterns, str] = RegexPatterns.PUNCTUATION, replacement:str=''):
+    def replace_regex(self, dataframe: pd.DataFrame, column: Union[str, int], regex:Union[RegexPatterns, str] = RegexPatterns.PUNCTUATION, replacement:str=''):
         df_copy = dataframe.copy()
         df_copy[column] = df_copy[column].str.replace(regex, replacement, regex=True)
         return df_copy
 
 
-    @ColumnTypeValidators.is_column_exists
     @ColumnTypeValidators.string_required
-    def filter_words(dataframe: pd.DataFrame, column: Union[str, int], remove=['fword']):
+    def filter_words(self, dataframe: pd.DataFrame, column: Union[str, int], remove=['fword']):
         df_copy = dataframe.copy()
         remove_set = set(remove)
         df_copy[column] = df_copy[column].apply(lambda x: ' '.join([word for word in x.split() if word.lower() not in remove_set]))

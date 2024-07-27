@@ -13,6 +13,7 @@ class OutlierHandler:
         FREQUENCY = 2
     
     def __init__(self) -> None:
+        """"""
         pass
     
     
@@ -70,14 +71,12 @@ class OutlierHandler:
 
         return df_copy
     
-    @ColumnTypeValidators.is_column_exists
     @ColumnTypeValidators.numeric_required
     def log_transform(self, dataframe: pd.DataFrame, column: Union[str, int]):
         df_copy = dataframe.copy()
         df_copy[column] = df_copy[column].apply(lambda x: np.log(x) if x > 0 else np.nan)
         return df_copy
     
-    @ColumnTypeValidators.is_column_exists
     @ColumnTypeValidators.numeric_required
     def square_transform(self, dataframe: pd.DataFrame, column: Union[str, int]):
         df_copy = dataframe.copy()
