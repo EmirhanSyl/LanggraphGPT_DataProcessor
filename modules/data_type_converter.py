@@ -12,7 +12,6 @@ class DataTypeConverter:
         """"""
         pass
 
-
     # -------------- CATEGORICAL ENCODERS --------------
     @ColumnTypeValidators.string_required
     def label_encoding(self, dataframe: pd.DataFrame, column: Union[str, int]):
@@ -24,7 +23,6 @@ class DataTypeConverter:
         return df_copy
     
     def one_hot_encoding(self, dataframe: pd.DataFrame, column: Union[str, int]):
-
         df_copy = dataframe.copy()
         one_hot_encoded = pd.get_dummies(df_copy[column], prefix=column)
         df_copy = df_copy.drop(column, axis=1)
