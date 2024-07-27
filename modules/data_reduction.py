@@ -2,14 +2,12 @@ import pandas as pd
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_selection import SelectKBest, chi2, f_classif
 from sklearn.preprocessing import StandardScaler
-from modules.helpers.validators import ColumnTypeValidators
 
 class DataReduction:
     def __init__(self) -> None:
         pass
 
     # ----------- Principal Component Analysis (PCA) -----------
-    @ColumnTypeValidators.numeric_required
     def apply_pca(self, dataframe: pd.DataFrame, n_components: int) -> pd.DataFrame:
         """Apply PCA to reduce dimensionality."""
         df_copy = dataframe.copy()
@@ -24,7 +22,6 @@ class DataReduction:
         return pd.concat([df_copy.reset_index(drop=True), pca_df], axis=1)
 
     # ----------- Singular Value Decomposition (SVD) -----------
-    @ColumnTypeValidators.numeric_required
     def apply_svd(self, dataframe: pd.DataFrame, n_components: int) -> pd.DataFrame:
         """Apply SVD to reduce dimensionality."""
         df_copy = dataframe.copy()
@@ -39,7 +36,6 @@ class DataReduction:
         return pd.concat([df_copy.reset_index(drop=True), svd_df], axis=1)
 
     # ----------- Feature Selection: SelectKBest (Chi-Square) -----------
-    @ColumnTypeValidators.numeric_required
     def select_k_best_chi2(self, dataframe: pd.DataFrame, target_column: str, k: int) -> pd.DataFrame:
         """Select K best features based on Chi-Square."""
         df_copy = dataframe.copy()
@@ -53,7 +49,6 @@ class DataReduction:
         return df_copy[selected_features]
 
     # ----------- Feature Selection: SelectKBest (ANOVA F-value) -----------
-    @ColumnTypeValidators.numeric_required
     def select_k_best_anova(self, dataframe: pd.DataFrame, target_column: str, k: int) -> pd.DataFrame:
         """Select K best features based on ANOVA F-value."""
         df_copy = dataframe.copy()
