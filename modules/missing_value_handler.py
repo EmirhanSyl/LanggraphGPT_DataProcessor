@@ -90,7 +90,8 @@ class MissingValueHandler:
        elif pd.api.types.is_datetime64_any_dtype(df_copy[column]) and isinstance(const, datetime):
            const_value = const
        else:
-            raise ValueError(f"Unsupported const type for column '{column}'")
+            const_value = const
+            print(f"Unsupported const type for column '{column}'. This might cause unexpected results")
         
        df_copy[column] = df_copy[column].fillna(const_value)
        return df_copy
