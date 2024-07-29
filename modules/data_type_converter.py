@@ -34,14 +34,18 @@ class DataTypeConverter:
     @ColumnTypeValidators.numeric_required
     def standardize_data(self, dataframe: pd.DataFrame, column: Union[str, int]):
         scaler = StandardScaler()
-        scaled_data = scaler.fit_transform(dataframe[column])
-        return pd.DataFrame(scaled_data, columns=dataframe.columns)
+        scaled_data = scaler.fit_transform(dataframe[[column]])
+        df_copy = dataframe.copy()
+        df_copy[column] = scaled_data
+        return df_copy
 
     @ColumnTypeValidators.numeric_required
     def normalize_data(self, dataframe: pd.DataFrame, column: Union[str, int]):
         scaler = MinMaxScaler()
-        scaled_data = scaler.fit_transform(dataframe[column])
-        return pd.DataFrame(scaled_data, columns=dataframe.columns)
+        scaled_data = scaler.fit_transform(dataframe[[column]])
+        df_copy = dataframe.copy()
+        df_copy[column] = scaled_data
+        return df_copy
 
     @ColumnTypeValidators.numeric_required
     def normalize_vectors(self, dataframe: pd.DataFrame, column: Union[str, int]):

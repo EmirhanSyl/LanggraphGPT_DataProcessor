@@ -46,8 +46,8 @@ class OutlierHandler:
 
     # -------------- HANDLE OUTLIERS --------------
     @ColumnTypeValidators.is_column_exists
-    def handle_outliers(self, dataframe: pd.DataFrame, column: Union[str, int], identifier : Identifier = Identifier.IQR, 
-                        method : str ='drop', filling_strategy : MissingValueHandler.Strategy = 1, const = 0):
+    def handle_outliers(self, dataframe: pd.DataFrame, column: Union[str, int], identifier: Identifier = Identifier.IQR,
+                        filling_strategy: MissingValueHandler.Strategy = 1, const=0):
 
         if identifier == self.Identifier.IQR:
             outlier_indices = self.identify_outliers_iqr(dataframe, column)
@@ -57,17 +57,13 @@ class OutlierHandler:
             outlier_indices = self.identify_outliers_zscore(dataframe, column)
         else:
             raise ValueError("Invalid Identifier")
-        
-        df_copy = dataframe.copy()
 
-        if method == 'drop':
-            df_copy.drop(outlier_indices, inplace=True)
-            missing_handler = MissingValueHandler()
-            df_copy = missing_handler.replace_missing_values(df_copy, filling_strategy, column, const)
-        elif method == 'log':
-            df_copy[column] = df_copy[column].apply(lambda x: np.log(x) if x > 0 else np.nan)
-        elif method == 'sqrt':
-            df_copy[column] = df_copy[column].apply(lambda x: np.sqrt(x) if x >= 0 else np.nan)
+        print(f"Detected Outlier Values {'_'*60}")
+        print((dataframe.loc[outlier_indices]).head())
+        df_copy = dataframe.copy()
+        df_copy.drop(outlier_indices, inplace=True)
+        missing_handler = MissingValueHandler()
+        df_copy = missing_handler.replace_missing_values(df_copy, column, filling_strategy, const)
 
         return df_copy
     

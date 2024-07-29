@@ -110,7 +110,7 @@ class MissingValueHandler:
         return df_copy
 
     @ColumnTypeValidators.is_column_exists
-    def replace_missing_values(self, dataframe: pd.DataFrame, strategy: Strategy = Strategy.MEAN, column: Union[int, str] = 0, const : Union[int, str, datetime] = np.nan) -> pd.DataFrame:
+    def replace_missing_values(self, dataframe: pd.DataFrame, column: Union[int, str] = 0, strategy: Strategy = Strategy.MEAN, const : Union[int, str, datetime] = np.nan) -> pd.DataFrame:
         if strategy == self.Strategy.MODE:
             return self.replace_mode(dataframe, column)
         elif strategy == self.Strategy.MEAN:

@@ -7,7 +7,7 @@ from modules.helpers.validators import ColumnTypeValidators
 
 class DataVisualizer:
     def __init__(self) -> None:
-        """"""
+        sns.set(style="whitegrid")
         pass
 
     @ColumnTypeValidators.is_column_exists
@@ -21,13 +21,13 @@ class DataVisualizer:
         plt.show()
 
     @ColumnTypeValidators.is_column_exists
-    def plot_bar(self, dataframe: pd.DataFrame, column: Union[str, int]) -> None:
+    def plot_bar(self, dataframe: pd.DataFrame, column: Union[str, int], column2: Union[str, int]) -> None:
         """Plot a bar chart for a specified column."""
         plt.figure(figsize=(10, 6))
-        sns.countplot(x=dataframe.iloc[:, column], data=dataframe)
-        plt.title(f'Bar Chart of {dataframe.columns[column]}')
-        plt.xlabel(dataframe.columns[column])
-        plt.ylabel('Count')
+        sns.countplot(x=column, y=column2, data=dataframe.sort_values(column, ascending=False), palette='viridis')
+        plt.title(f'Bar Chart of {column}, {column2}')
+        plt.xlabel(column)
+        plt.ylabel(column2)
         plt.show()
 
     @ColumnTypeValidators.is_column_exists

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from modules import text_cleaner, missing_value_handler, language_processor, data_type_converter
+from modules import text_cleaner, missing_value_handler, language_processor, data_type_converter, outlier_handler, data_visualizer
 
 # Load Data
 df = pd.read_csv("../../dataset/death_causes.csv")
@@ -47,12 +47,23 @@ print(ngram_data.head())
 # Use Scalar operations on numeric columns
 data_type_converter = data_type_converter.DataTypeConverter()
 # Standardize Data
-# standard_data = data_type_converter.standardize_data(df, '2020')
-# print(f"\nStandardized Data{'_'*60}")
-# print(standard_data.head())
+standard_data = data_type_converter.standardize_data(df, '2020')
+print(f"\nStandardized Data{'_'*60}")
+print(standard_data.head())
 
 # Normalize Data
-normalized_data = data_type_converter.normalize_data(df, '2020')
+normalized_data = data_type_converter.normalize_data(df, 'Total')
 print(f"\nNormalized Data {'_'*60}")
 print(normalized_data.head())
 
+# Detect outliers
+outlier_handler = outlier_handler.OutlierHandler()
+# Detect and handle outliers
+outliers_cleared_data = outlier_handler.handle_outliers(df, '2019', outlier_handler.Identifier.IQR,
+                                                        missing_value_handler.MissingValueHandler.Strategy.MEAN)
+print(f"\nOutliers Replaced With Mean {'_'*60}")
+print(outliers_cleared_data.iloc[5:10])
+
+
+data_visualizer = data_visualizer.DataVisualizer()
+data_visualizer.plot_bar(df, 'Total', 'CAUSE')
