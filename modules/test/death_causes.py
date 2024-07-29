@@ -67,3 +67,4 @@ print(outliers_cleared_data.iloc[5:10])
 
 data_visualizer = data_visualizer.DataVisualizer()
 data_visualizer.plot_bar(df, 'Total', 'CAUSE')
+data_visualizer.plot_pie(df, 'Total', 'CAUSE', threshold=2)

@@ -23,9 +23,12 @@ class DataVisualizer:
     @ColumnTypeValidators.is_column_exists
     def plot_bar(self, dataframe: pd.DataFrame, column: Union[str, int], column2: Union[str, int]) -> None:
         """Plot a bar chart for a specified column."""
-        plt.figure(figsize=(10, 6))
-        sns.countplot(x=column, y=column2, data=dataframe.sort_values(column, ascending=False), palette='viridis')
-        plt.title(f'Bar Chart of {column}, {column2}')
+        plt.figure(figsize=(12, 8))
+
+        sns.barplot(x=column, y=column2, data=dataframe.sort_values(column, ascending=False), palette='viridis')
+        name1 = str(column)
+        name2 = str(column2)
+        plt.title(f'Bar Chart of {name1}, {name2}')
         plt.xlabel(column)
         plt.ylabel(column2)
         plt.show()
@@ -63,22 +66,34 @@ class DataVisualizer:
         sns.pairplot(dataframe)
         plt.show()
 
-    @ColumnTypeValidators.is_column_exists
-    def plot_pie(self, dataframe: pd.DataFrame, column: Union[str, int]) -> None:
+
+    def plot_pie(self, dataframe: pd.DataFrame, data_column: Union[str, int], label_column: Union[str, int], threshold:float=1) -> None:
         """Plot a pie chart for a specified column."""
-        plt.figure(figsize=(10, 6))
-        dataframe[column].value_counts().plot.pie(autopct='%1.1f%%')
-        plt.title(f'Pie Chart of {dataframe.columns[column]}')
-        plt.ylabel('')
+        df_copy = dataframe.copy()
+        total_deaths_sum = dataframe['Total'].sum()
+        df_copy['Percentage'] = (dataframe['Total'] / total_deaths_sum) * 100
+
+        others = df_copy[df_copy['Percentage'] < threshold].sum()
+        df_copy = df_copy[df_copy['Percentage'] >= threshold]
+
+        others_row = pd.DataFrame([['Other', others['Total'], others['Percentage']]],
+                                  columns=['CAUSE', 'Total', 'Percentage'])
+        df_copy = pd.concat([df_copy, others_row], ignore_index=True)
+
+        plt.figure(figsize=(10, 10))
+        plt.pie(df_copy.sort_values(data_column, ascending=False)[data_column], labels=df_copy[label_column], autopct='%1.1f%%', startangle=140,
+                colors=sns.color_palette("viridis", len(df_copy[label_column])))
+        plt.title(f'Proportion of {data_column} by {label_column}')
+        plt.axis('equal')
         plt.show()
 
     def plot_line(self, dataframe: pd.DataFrame, x_column: Union[str, int], y_column: Union[str, int]) -> None:
         """Plot a line chart between two specified columns."""
         plt.figure(figsize=(10, 6))
-        sns.lineplot(x=dataframe.iloc[:, x_column], y=dataframe.iloc[:, y_column])
-        plt.title(f'Line Chart of {dataframe.columns[x_column]} vs {dataframe.columns[y_column]}')
-        plt.xlabel(dataframe.columns[x_column])
-        plt.ylabel(dataframe.columns[y_column])
+        sns.lineplot(x=dataframe.iloc[:, dataframe.columns.get_loc(x_column)], y=dataframe.iloc[:, dataframe.columns.get_loc(x_column)])
+        plt.title(f'Line Chart of {x_column} vs {y_column}')
+        plt.xlabel(f"{x_column}")
+        plt.ylabel(f"{y_column}")
         plt.show()
 
     def plot_interactive_scatter(self, dataframe: pd.DataFrame, x_column: Union[str, int], y_column: Union[str, int]) -> None:
