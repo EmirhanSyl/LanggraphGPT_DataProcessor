@@ -1,7 +1,7 @@
 from typing import Union
 import pandas as pd
 import numpy as np
-from scipy.stats import zscore
+from scipy.stats import zscore, kstest
 from enum import Enum 
 from modules.helpers.validators import ColumnTypeValidators
 from modules.missing_value_handler import MissingValueHandler
@@ -11,6 +11,7 @@ class OutlierHandler:
         IQR = 0
         ZSCORE = 1
         FREQUENCY = 2
+        AUTO = 3
     
     def __init__(self) -> None:
         """"""
@@ -43,12 +44,23 @@ class OutlierHandler:
 
         return outlier_indices
 
+    def choose_outlier_method(self, dataframe: pd.DataFrame, column: Union[str, int]):
+        # Check for normality using the Kolmogorov-Smirnov test
+        stat, p_value = kstest(dataframe[column], 'norm', args=(dataframe[column].mean(), dataframe[column].std()))
+        if p_value > 0.05:
+            # Data is normally distributed
+            return self.Identifier.ZSCORE
+        else:
+            # Data is not normally distributed
+            return self.Identifier.IQR
 
     # -------------- HANDLE OUTLIERS --------------
     @ColumnTypeValidators.is_column_exists
     def handle_outliers(self, dataframe: pd.DataFrame, column: Union[str, int], identifier: Identifier = Identifier.IQR,
                         filling_strategy: MissingValueHandler.Strategy = 1, const=0):
 
+        if identifier == self.Identifier.AUTO:
+            identifier = self.choose_outlier_method(dataframe, column)
         if identifier == self.Identifier.IQR:
             outlier_indices = self.identify_outliers_iqr(dataframe, column)
         elif identifier == self.Identifier.FREQUENCY:
@@ -59,9 +71,10 @@ class OutlierHandler:
             raise ValueError("Invalid Identifier")
 
         print(f"Detected Outlier Values {'_'*60}")
-        print((dataframe.loc[outlier_indices]).head())
+        print((dataframe.loc[outlier_indices])[column].head())
         df_copy = dataframe.copy()
-        df_copy.drop(outlier_indices, inplace=True)
+        df_copy.loc[outlier_indices, column] = np.nan
+
         missing_handler = MissingValueHandler()
         df_copy = missing_handler.replace_missing_values(df_copy, column, filling_strategy, const)
 

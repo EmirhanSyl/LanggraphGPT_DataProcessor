@@ -14,9 +14,9 @@ class DataVisualizer:
     def plot_histogram(self, dataframe: pd.DataFrame, column: Union[str, int], bins: int = 10) -> None:
         """Plot a histogram for a specified column."""
         plt.figure(figsize=(10, 6))
-        sns.histplot(dataframe.iloc[:, column], bins=bins, kde=True)
-        plt.title(f'Histogram of {dataframe.columns[column]}')
-        plt.xlabel(dataframe.columns[column])
+        sns.histplot(dataframe.iloc[:, dataframe.columns.get_loc(column)], bins=bins, kde=True)
+        plt.title(f'Histogram of {column}')
+        plt.xlabel(column)
         plt.ylabel('Frequency')
         plt.show()
 
@@ -37,9 +37,9 @@ class DataVisualizer:
     def plot_box(self, dataframe: pd.DataFrame, column: Union[str, int]) -> None:
         """Plot a box plot for a specified column."""
         plt.figure(figsize=(10, 6))
-        sns.boxplot(y=dataframe.iloc[:, column])
-        plt.title(f'Box Plot of {dataframe.columns[column]}')
-        plt.ylabel(dataframe.columns[column])
+        sns.boxplot(y=dataframe.iloc[:, dataframe.columns.get_loc(column)])
+        plt.title(f'Box Plot of {column}')
+        plt.ylabel(column)
         plt.show()
 
     def plot_scatter(self, dataframe: pd.DataFrame, x_column: Union[str, int], y_column: Union[str, int]) -> None:

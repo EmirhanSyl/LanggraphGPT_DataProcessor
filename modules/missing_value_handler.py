@@ -18,6 +18,7 @@ class MissingValueHandler:
         REMOVE_COLUMN = 5
         FORWARD = 6
         BACKWARD = 7
+        NONE = 8
     
     
     def __init__(self) -> None:
@@ -58,7 +59,9 @@ class MissingValueHandler:
 
     # -------------- HANDLE MISSING VALUES --------------
     def replace_mode(self, dataframe: pd.DataFrame, column: Union[int, str]) -> pd.DataFrame:
-        assert dataframe[column].mode().empty, f"There is no mode value for column '{column}. Skipping mode replacement...'"
+        if dataframe[column].mode().empty:
+            print(f"There is no mode value for column '{column}. Using Median replacement instead...'")
+            self.replace_median(dataframe, column)
         df_copy = dataframe.copy()
         
         mode_value = dataframe[column].mode()[0]
@@ -128,6 +131,8 @@ class MissingValueHandler:
             return self.replace_forward_backward(dataframe, column, "ffill")
         elif strategy == self.Strategy.BACKWARD:
             return self.replace_forward_backward(dataframe, column, "bfill")
+        elif strategy == self.Strategy.NONE:
+            return dataframe
         else:
             raise ValueError("Invalid strategy")
 
