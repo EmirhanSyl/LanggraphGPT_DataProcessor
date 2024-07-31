@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-from modules import text_cleaner, missing_value_handler, language_processor, data_type_converter, outlier_handler, data_visualizer, data_type_converter
+from modules import missing_value_handler, outlier_handler, data_visualizer, data_type_converter
 
 # Load Data
-df = pd.read_csv("../../dataset/flight_delays.csv")
+df = pd.read_csv("flight_delays.csv")
 
 # Get missing values ratio
 missing_handler = missing_value_handler.MissingValueHandler()

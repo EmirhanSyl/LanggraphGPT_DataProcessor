@@ -9,8 +9,13 @@ class DatetimeHandler:
     def __init__(self) -> None:
         """"""
         pass
-    
-    @ColumnTypeValidators.datetime_required
+
+    def convert_to_datetime(self, dataframe: pd.DataFrame, column: Union[str, int], format: str = '%Y-%m-%d %H:%M:%S'):
+        df_copy = dataframe.copy()
+        df_copy[column] = pd.to_datetime(dataframe[column], format=format, errors='coerce')
+        return df_copy
+
+    @ColumnTypeValidators.is_column_exists
     def correct_invalid_datetime(self, dataframe: pd.DataFrame, column: Union[str, int], format: str = '%Y-%m-%d %H:%M:%S') -> pd.DataFrame:
         '''Correct invalid datetime entries in the specified column by attempting to parse them into a valid datetime format.'''
         def correct_date(date_str):

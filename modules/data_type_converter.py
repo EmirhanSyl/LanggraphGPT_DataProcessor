@@ -14,22 +14,26 @@ class DataTypeConverter:
 
     # -------------- CATEGORICAL ENCODERS --------------
     @ColumnTypeValidators.string_required
-    def label_encoding(self, dataframe: pd.DataFrame, column: Union[str, int]):
+    def label_encoding(self, dataframe: pd.DataFrame, column: Union[str, int], fit=None):
         """Convert categorical variables into numerical values"""
 
         df_copy = dataframe.copy()
         encoder = LabelEncoder()
-        df_copy[column] = encoder.fit_transform(df_copy[column])
+
+        if fit is None:
+            df_copy[column] = encoder.fit_transform(df_copy[column])
+        else:
+            encoder.fit(fit)
+            df_copy[column] = encoder.transform(df_copy[column])
         return df_copy
-    
+
     def one_hot_encoding(self, dataframe: pd.DataFrame, column: Union[str, int]):
         df_copy = dataframe.copy()
         one_hot_encoded = pd.get_dummies(df_copy[column], prefix=column)
         df_copy = df_copy.drop(column, axis=1)
         df_copy = df_copy.join(one_hot_encoded)
         return df_copy
-    
-    
+
     # -------------- SCALAR CONVERTIONS --------------
     @ColumnTypeValidators.numeric_required
     def standardize_data(self, dataframe: pd.DataFrame, column: Union[str, int]):
@@ -52,4 +56,3 @@ class DataTypeConverter:
         norm = np.linalg.norm(dataframe[column], axis=1)
         normalized_data = dataframe[column].div(norm, axis=0)
         return pd.DataFrame(normalized_data, columns=dataframe.columns)
-
