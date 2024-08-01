@@ -24,6 +24,10 @@ print(df['ORIGIN_CITY_NAME_ENCODED'].head())
 print(df['DEST_CITY_NAME_ENCODED'].head())
 
 datetime_handler = datetime_handler.DatetimeHandler()
-df['FL_DATE'] = pd.to_datetime(df['FL_DATE'], format="%m/%d/%Y %I:%M:%S %p", errors='coerce')
+df = datetime_handler.convert_to_datetime(df, 'FL_DATE', format="%m/%d/%Y %I:%M:%S %p")
 print(df.head())
 
+df.drop(columns=["MKT_UNIQUE_CARRIER", "OP_UNIQUE_CARRIER", "TAIL_NUM", "DUP", "ORIGIN_CITY_NAME",
+                 "DEST_CITY_NAME", "ORIGIN_STATE_ABR", "DEST_STATE_ABR"], inplace=True)
+
+df.to_csv("flight_delays_only_numeric.csv", index=False)
