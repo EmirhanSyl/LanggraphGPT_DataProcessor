@@ -2,7 +2,10 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from typing import Union
-from enum import Enum 
+from enum import Enum
+
+from sklearn.impute import KNNImputer
+
 from modules.helpers.validators import ColumnTypeValidators
 
 
@@ -18,7 +21,8 @@ class MissingValueHandler:
         REMOVE_COLUMN = 5
         FORWARD = 6
         BACKWARD = 7
-        NONE = 8
+        KNN_IMPUTE = 8
+        NONE = 9
     
     
     def __init__(self) -> None:
@@ -112,6 +116,13 @@ class MissingValueHandler:
         df_copy = dataframe.copy()
         df_copy[column] = df_copy[column].fillna(method)
         return df_copy
+
+    # ___________________ ADVANCED HANDLING ___________________
+    def knn_imputation(self, dataframe: pd.DataFrame, n_neighbors=3):
+        knn_imputer = KNNImputer(n_neighbors=3)
+        df_imputed = knn_imputer.fit_transform(dataframe)
+        df_imputed = pd.DataFrame(df_imputed, columns=dataframe.columns)
+        return df_imputed
 
     @ColumnTypeValidators.is_column_exists
     def replace_missing_values(self, dataframe: pd.DataFrame, column: Union[int, str] = 0, strategy: Strategy = Strategy.MEAN, const : Union[int, str, datetime] = np.nan) -> pd.DataFrame:
