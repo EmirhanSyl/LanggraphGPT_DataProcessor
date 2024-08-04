@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Union
 from enum import Enum
 
-from sklearn.impute import KNNImputer
+from sklearn.impute import KNNImputer, IterativeImputer
 
 from modules.helpers.validators import ColumnTypeValidators
 
@@ -22,7 +22,9 @@ class MissingValueHandler:
         FORWARD = 6
         BACKWARD = 7
         KNN_IMPUTE = 8
-        NONE = 9
+        MICE = 9
+        REGRESSION = 10
+        NONE = 11
     
     
     def __init__(self) -> None:
@@ -119,10 +121,24 @@ class MissingValueHandler:
 
     # ___________________ ADVANCED HANDLING ___________________
     def knn_imputation(self, dataframe: pd.DataFrame, n_neighbors=3):
-        knn_imputer = KNNImputer(n_neighbors=3)
+        knn_imputer = KNNImputer(n_neighbors=n_neighbors)
         df_imputed = knn_imputer.fit_transform(dataframe)
         df_imputed = pd.DataFrame(df_imputed, columns=dataframe.columns)
         return df_imputed
+
+    def mice_imputation(self, dataframe: pd.DataFrame, max_iter: int = 10, random_state: int = 0):
+        imputer = IterativeImputer(max_iter=max_iter, random_state=random_state)
+        imputed_data = imputer.fit_transform(dataframe)
+        imputed_data = pd.DataFrame(imputed_data, columns=dataframe.columns)
+        return imputed_data
+
+    def mice_imputation(self, dataframe: pd.DataFrame, max_iter: int = 10, random_state: int = 0):
+        imputer = IterativeImputer(max_iter=max_iter, random_state=random_state)
+        imputed_data = imputer.fit_transform(dataframe)
+        imputed_data = pd.DataFrame(imputed_data, columns=dataframe.columns)
+        return imputed_data
+
+    def regression_imputation(self,  dataframe: pd.DataFrame, max_iter: int = 10, random_state: int = 0):
 
     @ColumnTypeValidators.is_column_exists
     def replace_missing_values(self, dataframe: pd.DataFrame, column: Union[int, str] = 0, strategy: Strategy = Strategy.MEAN, const : Union[int, str, datetime] = np.nan) -> pd.DataFrame:
