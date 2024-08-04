@@ -2,7 +2,11 @@ from typing import Union
 import pandas as pd
 import numpy as np
 from scipy.stats import zscore, kstest
-from enum import Enum 
+from enum import Enum
+
+from sklearn.covariance import EllipticEnvelope
+from sklearn.ensemble import IsolationForest
+
 from modules.helpers.validators import ColumnTypeValidators
 from modules.missing_value_handler import MissingValueHandler
 
@@ -16,7 +20,6 @@ class OutlierHandler:
     def __init__(self) -> None:
         """"""
         pass
-    
     
     # -------------- DETECT OUTLIERS --------------
     @ColumnTypeValidators.numeric_required
@@ -53,6 +56,31 @@ class OutlierHandler:
         else:
             # Data is not normally distributed
             return self.Identifier.IQR
+
+    # -------------- ADVANCED OUTLIER DETECTION --------------
+    def identify_outliers_isolation_forest(self, dataframe: pd.DataFrame, column: str, contamination: float = 0.1):
+        model = IsolationForest(contamination=contamination)
+        model.fit(dataframe[[column]])
+
+        outliers = model.predict(dataframe[[column]])
+
+        # Return indices of outliers
+        outlier_indices = dataframe.index[outliers == -1].tolist()
+        return outlier_indices
+
+    def identify_outliers_elliptic_envolpe(self, dataframe: pd.DataFrame, column: str, contamination: float = 0.1):
+        model = EllipticEnvelope(contamination=contamination)
+
+        data = dataframe[[column]].values.reshape(-1, 1)
+        model.fit(data)
+
+        outliers = model.predict(data)
+
+        # Return indices of outliers
+        outlier_indices = dataframe.index[outliers == -1].tolist()
+        return outlier_indices
+
+
 
     # -------------- HANDLE OUTLIERS --------------
     @ColumnTypeValidators.is_column_exists
