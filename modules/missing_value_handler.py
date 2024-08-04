@@ -5,6 +5,10 @@ from typing import Union
 from enum import Enum
 
 from sklearn.impute import KNNImputer, IterativeImputer
+from sklearn.linear_model import LinearRegression
+from sklearn.mixture import GaussianMixture
+from sklearn.impute import SimpleImputer
+from sklearn.neighbors import NearestNeighbors
 
 from modules.helpers.validators import ColumnTypeValidators
 
@@ -24,7 +28,10 @@ class MissingValueHandler:
         KNN_IMPUTE = 8
         MICE = 9
         REGRESSION = 10
-        NONE = 11
+        INTERPOLATION = 11
+        GMM_EM = 12
+        HOT_DECK_IMPUTATION = 13
+        NONE = 14
     
     
     def __init__(self) -> None:
@@ -132,13 +139,97 @@ class MissingValueHandler:
         imputed_data = pd.DataFrame(imputed_data, columns=dataframe.columns)
         return imputed_data
 
-    def mice_imputation(self, dataframe: pd.DataFrame, max_iter: int = 10, random_state: int = 0):
-        imputer = IterativeImputer(max_iter=max_iter, random_state=random_state)
-        imputed_data = imputer.fit_transform(dataframe)
-        imputed_data = pd.DataFrame(imputed_data, columns=dataframe.columns)
+    def regression_imputation(self,  dataframe: pd.DataFrame, target_column: str, predictor_columns: list[str]):
+        predictors = dataframe[predictor_columns]
+        target = dataframe[target_column]
+
+        x_train = predictors[target.notna()]
+        y_train = target[target.notna()]
+        x_test = predictors[target.isna()]
+
+        # Train and Predict
+        model = LinearRegression()
+        model.fit(x_train, y_train)
+        y_pred = model.predict(x_test)
+
+        # Fill in the missing values
+        dataframe.loc[target.isna(), target_column] = y_pred
+        return dataframe
+
+    def interpolate_missings(self, dataframe: pd.DataFrame, column: Union[str, int], method: str = 'linear'):
+        """
+        Interpolates missing values in a specified column of a DataFrame.
+
+        Parameters:
+        ----------
+        dataframe : pd.DataFrame
+            The DataFrame containing the data to be interpolated.
+        column : Union[str, int]
+            The column in which to interpolate missing values.
+        method : str, default 'linear'
+            Interpolation technique to use. One of:
+
+            'linear': Ignore the index and treat the values as equally spaced. This is the only method supported on MultiIndexes.
+            'time': Works on daily and higher resolution data to interpolate given length of interval.
+            'index', 'values': Use the actual numerical values of the index.
+            'pad': Fill in NaNs using existing values.
+            'nearest', 'zero', 'slinear', 'quadratic', 'cubic', 'barycentric', 'polynomial': Passed to scipy.interpolate.interp1d, whereas ‘spline’ is passed to scipy.interpolate.UnivariateSpline. These methods use the numerical values of the index. Both ‘polynomial’ and ‘spline’ require that you also specify an order (int), e.g., df.interpolate(method='polynomial', order=5). Note that, slinear method in Pandas refers to the Scipy first order spline instead of Pandas first order spline.
+            'krogh', 'piecewise_polynomial', 'spline', 'pchip', 'akima', 'cubicspline': Wrappers around the SciPy interpolation methods of similar names.
+            'from_derivatives': Refers to scipy.interpolate.BPoly.from_derivatives.
+
+        Returns:
+        -------
+        pd.DataFrame
+            The DataFrame with missing values interpolated in the specified column.
+        """
+        return dataframe[[column]].interpolate(method=method)
+
+    def expectation_maximization_with_gmm(self, dataframe: pd.DataFrame, n_components=3, max_iter=100):
+        # Separate features and initialize the SimpleImputer
+        imputer = SimpleImputer(strategy='mean')
+        data_imputed = imputer.fit_transform(dataframe)
+
+        # Fit the Gaussian Mixture Model
+        gmm = GaussianMixture(n_components=n_components, max_iter=max_iter, random_state=42)
+        gmm.fit(data_imputed)
+
+        # Predict the missing values using the fitted GMM
+        missing_mask = np.isnan(dataframe)
+        for feature in range(dataframe.shape[1]):
+            if np.any(missing_mask[:, feature]):
+                # Predict the component probabilities for each sample
+                responsibilities = gmm.predict_proba(data_imputed)
+
+                # Compute the expected value for the missing feature based on GMM components
+                expected_values = np.dot(responsibilities, gmm.means_[:, feature])
+
+                # Replace the missing values with the expected values
+                data_imputed[missing_mask[:, feature], feature] = expected_values[missing_mask[:, feature]]
+
+        return pd.DataFrame(data_imputed, columns=dataframe.columns)
+
+    def hot_deck_imputation(self, dataframe: pd.DataFrame, n_neighbors=5):
+        missing_indices = np.where(dataframe.isnull())
+        imputed_data = dataframe.copy()
+
+        # Use NearestNeighbors to find similar records
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='auto').fit(dataframe.dropna())
+
+        for row, col in zip(missing_indices[0], missing_indices[1]):
+            if dataframe.iloc[row].isnull().any():
+                row_values = dataframe.iloc[row].values.reshape(1, -1)
+                mask = np.isnan(row_values)
+
+                # Find the nearest neighbors
+                distances, indices = nbrs.kneighbors(row_values[~mask].reshape(1, -1))
+                neighbors = dataframe.iloc[indices[0]].dropna()
+
+                # Randomly select a donor from the neighbors
+                donor = neighbors.sample(1)
+                imputed_data.iat[row, col] = donor.iloc[0, col]
+
         return imputed_data
 
-    def regression_imputation(self,  dataframe: pd.DataFrame, max_iter: int = 10, random_state: int = 0):
 
     @ColumnTypeValidators.is_column_exists
     def replace_missing_values(self, dataframe: pd.DataFrame, column: Union[int, str] = 0, strategy: Strategy = Strategy.MEAN, const : Union[int, str, datetime] = np.nan) -> pd.DataFrame:
