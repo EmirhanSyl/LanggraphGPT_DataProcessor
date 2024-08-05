@@ -1,11 +1,14 @@
 from typing import Union
 import pandas as pd
 import numpy as np
-from scipy.stats import zscore, kstest
+from scipy.spatial.distance import mahalanobis
+from scipy.stats import zscore, kstest, chi2
 from enum import Enum
 
+from sklearn.cluster import DBSCAN
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
 
 from modules.helpers.validators import ColumnTypeValidators
 from modules.missing_value_handler import MissingValueHandler
@@ -15,7 +18,12 @@ class OutlierHandler:
         IQR = 0
         ZSCORE = 1
         FREQUENCY = 2
-        AUTO = 3
+        ISOLATION_FOREST = 3
+        ELLIPTIC_ENVELOPE = 4
+        MAHALANOBIS_DISTANCE = 5
+        DBSCAN = 6
+        LOF = 7
+        AUTO = 8
     
     def __init__(self) -> None:
         """"""
@@ -80,7 +88,46 @@ class OutlierHandler:
         outlier_indices = dataframe.index[outliers == -1].tolist()
         return outlier_indices
 
+    def identify_outliers_mahalanobis_distance(self, dataframe: pd.DataFrame, column: str):
+        df = dataframe[[column]]
 
+        # Covariance matrix and its inverse
+        cov_matrix = np.cov(df.T)
+        inv_cov_matrix = np.linalg.inv(cov_matrix)
+
+        mean_distr = df.mean().values
+        mahalanobis_distances = df.apply(lambda row: mahalanobis(row, mean_distr, inv_cov_matrix), axis=1)
+
+        # Set a threshold for outliers
+        threshold = chi2.ppf((1 - 0.01), df.shape[1])  # 99% confidence interval
+
+        outliers = mahalanobis_distances > threshold
+        outlier_indices = df.index[outliers]
+
+        return outlier_indices
+
+    def identify_outliers_dbscan(self, dataframe: pd.DataFrame, columns: list[str], eps=0.5, min_samples=5):
+        df = dataframe[columns]
+        db = DBSCAN(eps=eps, min_samples=min_samples).fit(df)
+
+        labels = db.labels_
+
+        outliers = labels == -1
+        outlier_indices = df.index[outliers]
+
+        return outlier_indices
+
+    def identify_outliers_lof(self, dataframe: pd.DataFrame, columns: list[str], n_neighbors=20, contamination=0.1):
+        df = dataframe[columns]
+
+        # Fit the LOF model
+        lof = LocalOutlierFactor(n_neighbors=n_neighbors, contamination=contamination)
+        y_pred = lof.fit_predict(df)
+
+        outliers = y_pred == -1
+        outlier_indices = df.index[outliers]
+
+        return outlier_indices
 
     # -------------- HANDLE OUTLIERS --------------
     @ColumnTypeValidators.is_column_exists
