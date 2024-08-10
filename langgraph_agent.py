@@ -84,9 +84,10 @@ def run_query_agent(state: list):
 def execute_validation(state: list):
     print("> execute_validation")
     action = state["agent_out"]
-    tool_call = action[-1].message_log[-1].additional_kwargs["tool_calls"][-1]
+    print(action[-1].message_log[-1].tool_calls[-1])
+    tool_call = action[-1].message_log[-1].tool_calls[-1]
     out = validate_user_tool.invoke(
-        json.loads(tool_call["function"]["arguments"])
+        json.loads(tool_call["args"])
     )
     return {"intermediate_steps": [{"validate": str(out)}]}
 
@@ -155,5 +156,11 @@ graph.add_edge("error", END)
 graph.add_edge("rag_final_answer", END)
 
 runnable = graph.compile()
-Image(runnable.get_graph().draw_png())
+runnable.get_graph().draw_png("graph.png")
 
+runnable = graph.compile()
+
+out = runnable.invoke({
+    "input": "Do you verify that a user named 'ahmet' with the password '123' exists?",
+    "chat_history": []
+})
