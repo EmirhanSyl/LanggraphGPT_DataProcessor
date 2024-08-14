@@ -6,3 +6,4 @@ def setup_llm(tools: list = None):
     if tools:
         llm = llm.bind_tools(tools)
     return llm
+

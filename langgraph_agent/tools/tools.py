@@ -1,7 +1,8 @@
 import pandas as pd
 from langchain.tools import tool
 
-df = pd.read_csv("../../dataset/death_causes.csv")
+df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\DataPreprocessing\dataset\death_causes.csv")
+
 
 @tool
 def get_dataset_summary(query: str):
@@ -25,6 +26,7 @@ def get_dataset_summary(query: str):
             and quartiles for each numerical column.
         """
     return df.describe().to_string()
+
 
 @tool
 def handle_missing_values(column_name: str) -> str:

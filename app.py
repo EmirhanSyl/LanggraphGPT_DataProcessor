@@ -38,22 +38,24 @@ def stream_app_catch_tool_calls(inputs, thread, app) -> Optional[AIMessage]:
     return tool_call_message
 
 
-def main():
+def main(human_message= None):
     workflow = setup_workflow()
     memory = MemorySaver()
     app = workflow.compile(checkpointer=memory, interrupt_before=["action"])
 
-    inputs = [HumanMessage(content="can you fill the missing values on the column named 2019 in the dataset?")]
+    inputs = [human_message]
     thread = {"configurable": {"thread_id": "3"}}
     tool_call_message = stream_app_catch_tool_calls({"messages": inputs}, thread, app)
 
+    response = ""
+
     while tool_call_message:
         verification_message = generate_verification_message(tool_call_message)
-        verification_message.pretty_print()
+        response += f"{verification_message.content}\n"
         input_message = HumanMessage(input())
         if input_message.content == "exit":
             break
-        input_message.pretty_print()
+        response += f"{input_message.content}\n"
 
         snapshot = app.get_state(thread)
         snapshot.values["messages"] += [verification_message, input_message]
@@ -65,8 +67,10 @@ def main():
         else:
             app.update_state(thread, snapshot.values, as_node="__start__")
 
-        tool_call_message = stream_app_catch_tool_calls(None, thread)
+        tool_call_message = stream_app_catch_tool_calls(None, thread, app)
+
+    return response
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

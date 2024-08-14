@@ -8,7 +8,7 @@ from .models.llama_model import setup_llm
 
 tools = get_tools()
 tool_executor = ToolExecutor(tools)
-llm = setup_llm()
+llm = setup_llm(tools)
 
 
 # Define the function that determines whether to continue or not
