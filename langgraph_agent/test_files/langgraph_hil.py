@@ -11,7 +11,7 @@ from langgraph.graph import END, StateGraph, START
 from langgraph.checkpoint.memory import MemorySaver
 
 import pandas as pd
-df = pd.read_csv("dataset/death_causes.csv")
+df = pd.read_csv("../../dataset/death_causes.csv")
 
 
 class State(TypedDict):
