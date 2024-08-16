@@ -31,8 +31,8 @@ async def on_message(message: cl.Message):
 
         user_response = await cl.AskUserMessage(content="Do you want to proceed with the tool? (y/n)").send()
 
-        if user_response['content'].lower() == "exit":
-            break
+        # if user_response['content'].lower() == "exit":
+        #     break
 
         snapshot = app.get_state(thread)
         snapshot.values["messages"] += [verification_message, HumanMessage(content=user_response['content'].lower())]
@@ -44,7 +44,7 @@ async def on_message(message: cl.Message):
         else:
             app.update_state(thread, snapshot.values, as_node="__start__")
 
-        tool_call_message = stream_app_catch_tool_calls(None, thread, app)
+        tool_call_message = stream_app_catch_tool_calls(None, thread)
 
 
 # Helper function to construct message asking for verification

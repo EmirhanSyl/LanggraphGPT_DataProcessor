@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.9 (DataPreprocessing)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (DataPreprocessing)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (LanggraphGPT_DataProcessor)" project-jdk-type="Python SDK" />
 </project>
