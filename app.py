@@ -1,11 +1,12 @@
 import json
 import uuid
-from typing import Optional
+from typing import Optional, Tuple, Any
 
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph_agent.workflow import setup_workflow
 from langgraph.checkpoint.memory import MemorySaver
 
+app = None
 
 # Helper function to construct message asking for verification
 def generate_verification_message(message: AIMessage) -> AIMessage:
@@ -25,29 +26,36 @@ def generate_verification_message(message: AIMessage) -> AIMessage:
 
 
 # Helper function to stream output from the graph
-def stream_app_catch_tool_calls(inputs, thread, app) -> Optional[AIMessage]:
+def stream_app_catch_tool_calls(inputs, thread, app) -> tuple[Optional[AIMessage], Optional[Any]]:
     """Stream app, catching tool calls."""
     tool_call_message = None
+    response_message = None
     for event in app.stream(inputs, thread, stream_mode="values"):
         message = event["messages"][-1]
         if isinstance(message, AIMessage) and message.tool_calls:
             tool_call_message = message
         else:
             message.pretty_print()
+            response_message = message
 
-    return tool_call_message
+    return tool_call_message, response_message
 
 
-def main(human_message= None):
+def setup_runnable():
+    global app
     workflow = setup_workflow()
     memory = MemorySaver()
     app = workflow.compile(checkpointer=memory, interrupt_before=["action"])
+    return app
 
+
+def main(human_message= None):
+    global app
     inputs = [human_message]
     thread = {"configurable": {"thread_id": "3"}}
-    tool_call_message = stream_app_catch_tool_calls({"messages": inputs}, thread, app)
+    tool_call_message, response_message = stream_app_catch_tool_calls({"messages": inputs}, thread, app)
 
-    response = ""
+    response = response_message.content if response_message else ""
 
     while tool_call_message:
         verification_message = generate_verification_message(tool_call_message)
@@ -69,8 +77,5 @@ def main(human_message= None):
 
         tool_call_message = stream_app_catch_tool_calls(None, thread, app)
 
-    return response
+    return response, tool_call_message
 
-
-# if __name__ == "__main__":
-#     main()
