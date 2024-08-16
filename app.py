@@ -7,27 +7,13 @@ from langgraph_agent.workflow import setup_workflow
 from langgraph.checkpoint.memory import MemorySaver
 
 app = None
-
-# Helper function to construct message asking for verification
-def generate_verification_message(message: AIMessage) -> AIMessage:
-    """Generate "verification message" from message with tool calls."""
-    serialized_tool_calls = json.dumps(
-        message.tool_calls,
-        indent=2,
-    )
-    return AIMessage(
-        content=(
-            "I plan to invoke the following tools, do you approve?\n\n"
-            "Type 'y' if you do, anything else to stop.\n\n"
-            f"{serialized_tool_calls}"
-        ),
-        id=message.id,
-    )
+thread = {"configurable": {"thread_id": "3"}}
 
 
 # Helper function to stream output from the graph
-def stream_app_catch_tool_calls(inputs, thread, app) -> tuple[Optional[AIMessage], Optional[Any]]:
+def stream_app_catch_tool_calls(inputs, thread) -> tuple[Optional[AIMessage], Optional[Any]]:
     """Stream app, catching tool calls."""
+    global app
     tool_call_message = None
     response_message = None
     for event in app.stream(inputs, thread, stream_mode="values"):
@@ -50,32 +36,12 @@ def setup_runnable():
 
 
 def main(human_message= None):
-    global app
+    global thread
     inputs = [human_message]
     thread = {"configurable": {"thread_id": "3"}}
-    tool_call_message, response_message = stream_app_catch_tool_calls({"messages": inputs}, thread, app)
+    tool_call_message, response_message = stream_app_catch_tool_calls({"messages": inputs}, thread)
 
     response = response_message.content if response_message else ""
-
-    while tool_call_message:
-        verification_message = generate_verification_message(tool_call_message)
-        response += f"{verification_message.content}\n"
-        input_message = HumanMessage(input())
-        if input_message.content == "exit":
-            break
-        response += f"{input_message.content}\n"
-
-        snapshot = app.get_state(thread)
-        snapshot.values["messages"] += [verification_message, input_message]
-
-        if input_message.content == "y":
-            tool_call_message.id = str(uuid.uuid4())
-            snapshot.values["messages"] += [tool_call_message]
-            app.update_state(thread, snapshot.values, as_node="agent")
-        else:
-            app.update_state(thread, snapshot.values, as_node="__start__")
-
-        tool_call_message = stream_app_catch_tool_calls(None, thread, app)
 
     return response, tool_call_message
 

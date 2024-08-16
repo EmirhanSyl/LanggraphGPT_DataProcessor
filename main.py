@@ -3,7 +3,7 @@ import uuid
 
 import chainlit as cl
 from langchain_core.messages import HumanMessage, AIMessage
-from app import main, setup_runnable, app, stream_app_catch_tool_calls
+from app import main, setup_runnable, app, thread, stream_app_catch_tool_calls
 
 
 @cl.on_chat_start
@@ -22,7 +22,7 @@ async def on_message(message: cl.Message):
     response, tool_call_message = main(human_message)
 
     # Send the response back to the user
-    if not tool_call_message:
+    if response != "":
         await cl.Message(content=response).send()
 
     while tool_call_message:
