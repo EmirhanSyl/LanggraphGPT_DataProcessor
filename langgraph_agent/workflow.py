@@ -4,7 +4,50 @@ from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from .agent_state import State
 from .tools.tools import get_tools
-from .models.llama_model import setup_llm
+from .models.llama_model import setup_llm, ModelLLama
+
+
+class Workflow:
+    def __init__(self):
+        self.tools = get_tools()
+        self.tool_executor = ToolExecutor(tools)
+        self.model = ModelLLama(tools)
+
+    # __________________________ NODES __________________________
+    # Define the function that determines whether to continue or not
+    def should_continue(self, state):
+        messages = state["messages"]
+        last_message = messages[-1]
+        if not last_message.tool_calls:
+            return "end"
+        else:
+            return "continue"
+
+    # Define the function that calls the model
+    def call_model(self, state):
+        messages = state["messages"]
+        response = self.model.llm.invoke(messages)
+        return {"messages": [response]}
+
+    # Define the function to execute tools
+    def call_tool(self, state):
+        messages = state["messages"]
+        last_message = messages[-1]
+
+        # We construct a ToolInvocation from the function_call
+        tool_call = last_message.tool_calls[0]
+        action = ToolInvocation(
+            tool=tool_call["name"],
+            tool_input=tool_call["args"],
+        )
+        # We call the tool_executor and get back a response
+        response = tool_executor.invoke(action)
+        # We use the response to create a ToolMessage
+        tool_message = ToolMessage(
+            content=str(response), name=action.tool, tool_call_id=tool_call["id"]
+        )
+        # We return a list, because this will get added to the existing list
+        return {"messages": [tool_message]}
 
 tools = get_tools()
 tool_executor = ToolExecutor(tools)

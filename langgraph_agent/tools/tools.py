@@ -1,7 +1,7 @@
 import pandas as pd
 from langchain.tools import tool
 
-df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\DataPreprocessing\dataset\death_causes.csv")
+df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
 
 
 @tool
