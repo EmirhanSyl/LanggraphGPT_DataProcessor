@@ -14,6 +14,7 @@ class App:
         self.workflow = self.wf.workflow_model
         self.memory = MemorySaver()
         self.app_runnable = self.workflow.compile(checkpointer=self.memory, interrupt_before=["action"])
+        self.app_runnable.get_graph().draw_png("workflow_graph.png")
 
     # Helper function to stream output from the graph
     def stream_app_catch_tool_calls(self, inputs, thread) -> tuple[Optional[AIMessage], Optional[Any]]:

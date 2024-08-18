@@ -3,8 +3,8 @@ import uuid
 
 import chainlit as cl
 from langchain_core.messages import HumanMessage, AIMessage
+from langgraph_agent.agent_state import MessageTypes
 from app import App
-
 
 app = App()
 
@@ -15,32 +15,64 @@ async def on_chat_start():
                      " friendly and helpful message to welcome the user.")
     cl.user_session.set("runnable", app.app_runnable)
     response, tool_call_message = app.main(HumanMessage(content=hi_msg_prompt))
+
+    initial_state = {
+        "messages": [AIMessage(content=response)],
+        "last_message_type": MessageTypes.CHAT,  # Initialize with a default value
+        "last_called_tool": {}  # Initialize as an empty dictionary
+    }
+
+    # Start the workflow with the initial state
+    app.app_runnable.update_state(app.thread, initial_state)
     await cl.Message(content=response).send()
+
 
 # Set up Chainlit app
 @cl.on_message
 async def on_message(message: cl.Message):
     # Create a human message
     human_message = HumanMessage(content=message.content)
-    # Process the message through the existing workflow
-    # await cl.Message(content="Processing your request...").send()
     response, tool_call_message = app.main(human_message)
-    # Send the response back to the user
-    if response != "":
+
+    snapshot = app.app_runnable.get_state(app.thread)
+    print(snapshot.values)
+    message_type = snapshot.values["last_message_type"]
+
+    if message_type == MessageTypes.CHAT:
         await cl.Message(content=response).send()
-    while tool_call_message:
-        verification_message = generate_verification_message(tool_call_message)
-        await cl.Message(content=verification_message.content).send()
-        user_response = await cl.AskUserMessage(content="Do you want to proceed with the tool? (y/n)").send()
+    elif message_type == MessageTypes.VERIFICATION:
+        actions = [
+            cl.Action(name="approve_tool_use", value="approve", description="approve"),
+            cl.Action(name="deny_tool_use", value="deny", description="deny"),
+        ]
+        await cl.Message(content=response, actions=actions).send()
+
+
+# Handle button click event
+@cl.action_callback("approve_tool_use")
+async def on_action_approve(action):
+    if action.value == "approve":
         snapshot = app.app_runnable.get_state(app.thread)
-        snapshot.values["messages"] += [verification_message, HumanMessage(content=user_response['content'].lower())]
-        if user_response['content'].lower() == "y":
-            tool_call_message.id = str(uuid.uuid4())
-            snapshot.values["messages"] += [tool_call_message]
-            app.app_runnable.update_state(app.thread, snapshot.values, as_node="agent")
-        else:
-            app.app_runnable.update_state(app.thread, snapshot.values, as_node="__start__")
-        tool_call_message = app.stream_app_catch_tool_calls(None, app.thread)
+        tool_call_message = snapshot.values['messages'][-2]
+        tool_call_message.id = str(uuid.uuid4())
+
+        snapshot.values['messages'] += [HumanMessage(content="I approved to use this tool. Tool executed."), tool_call_message]
+        app.app_runnable.update_state(app.thread, snapshot.values, as_node="__start__")
+        await action.remove()
+
+        app.stream_app_catch_tool_calls(None, app.thread)
+
+
+@cl.action_callback("deny_tool_use")
+async def on_action_approve(action):
+    if action.value == "deny":
+        snapshot = app.app_runnable.get_state(app.thread)
+        snapshot.values['messages'] += [HumanMessage(content="I denied to use this tool. Tool didn't called.")]
+
+        app.app_runnable.update_state(app.thread, snapshot.values, as_node="agent")
+        await action.remove()
+
+        app.stream_app_catch_tool_calls(None, app.thread)
 
 
 # Helper function to construct message asking for verification

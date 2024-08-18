@@ -5,9 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9842835c-7a46-4f54-9327-37ba2ff801da" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/LanggraphGPT_DataProcessor.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/LanggraphGPT_DataProcessor.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/langgraph_agent/agent_state.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/agent_state.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/langgraph_agent/models/llama_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/models/llama_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/langgraph_agent/workflow.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/workflow.py" afterDir="false" />
@@ -29,15 +29,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "main",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

@@ -10,7 +10,7 @@ class ToolEditor:
         self.tool_executor = ToolExecutor(self.tools)
 
     @tool
-    def get_dataset_summary(self, query: str):
+    def get_dataset_summary(self):
         """
         Generate a summary of the dataset.
 
