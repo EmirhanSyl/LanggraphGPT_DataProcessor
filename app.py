@@ -3,45 +3,38 @@ import uuid
 from typing import Optional, Tuple, Any
 
 from langchain_core.messages import AIMessage, HumanMessage
-from langgraph_agent.workflow import setup_workflow
+from langgraph_agent.workflow import Workflow
 from langgraph.checkpoint.memory import MemorySaver
 
-app = None
-thread = {"configurable": {"thread_id": "3"}}
 
+class App:
+    def __init__(self, thread_id: str = "0") -> None:
+        self.thread = {"configurable": {"thread_id": thread_id}}
+        self.wf = Workflow()
+        self.workflow = self.wf.workflow_model
+        self.memory = MemorySaver()
+        self.app_runnable = self.workflow.compile(checkpointer=self.memory, interrupt_before=["action"])
 
-# Helper function to stream output from the graph
-def stream_app_catch_tool_calls(inputs, thread) -> tuple[Optional[AIMessage], Optional[Any]]:
-    """Stream app, catching tool calls."""
-    global app
-    tool_call_message = None
-    response_message = None
-    for event in app.stream(inputs, thread, stream_mode="values"):
-        message = event["messages"][-1]
-        if isinstance(message, AIMessage) and message.tool_calls:
-            tool_call_message = message
-        else:
-            message.pretty_print()
-            response_message = message
+    # Helper function to stream output from the graph
+    def stream_app_catch_tool_calls(self, inputs, thread) -> tuple[Optional[AIMessage], Optional[Any]]:
+        """Stream app, catching tool calls."""
+        tool_call_message = None
+        response_message = None
+        for event in self.app_runnable.stream(inputs, thread, stream_mode="values"):
+            message = event["messages"][-1]
+            if isinstance(message, AIMessage) and message.tool_calls:
+                tool_call_message = message
+            else:
+                message.pretty_print()
+                response_message = message
 
-    return tool_call_message, response_message
+        return tool_call_message, response_message
 
+    def main(self, human_message=None):
+        inputs = [human_message]
+        tool_call_message, response_message = self.stream_app_catch_tool_calls({"messages": inputs}, self.thread)
 
-def setup_runnable():
-    global app
-    workflow = setup_workflow()
-    memory = MemorySaver()
-    app = workflow.compile(checkpointer=memory, interrupt_before=["action"])
-    return app
+        response = response_message.content if response_message else ""
 
-
-def main(human_message= None):
-    global thread
-    inputs = [human_message]
-    thread = {"configurable": {"thread_id": "3"}}
-    tool_call_message, response_message = stream_app_catch_tool_calls({"messages": inputs}, thread)
-
-    response = response_message.content if response_message else ""
-
-    return response, tool_call_message
+        return response, tool_call_message
 

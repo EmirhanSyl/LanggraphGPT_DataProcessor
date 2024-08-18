@@ -1,12 +1,17 @@
 import pandas as pd
 from langchain.tools import tool
+from langgraph.prebuilt import ToolExecutor
 
-df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
 
+class ToolEditor:
+    def __init__(self) -> None:
+        self.df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
+        self.tools = self.get_tools()
+        self.tool_executor = ToolExecutor(self.tools)
 
-@tool
-def get_dataset_summary(query: str):
-    """
+    @tool
+    def get_dataset_summary(self, query: str):
+        """
         Generate a summary of the dataset.
 
         This function retrieves a dataset,
@@ -25,12 +30,12 @@ def get_dataset_summary(query: str):
             including metrics such as count, mean, standard deviation, min, max,
             and quartiles for each numerical column.
         """
-    return df.describe().to_string()
+        return self.df.describe().to_string()
 
 
-@tool
-def handle_missing_values(column_name: str) -> str:
-    """
+    @tool
+    def handle_missing_values(self, column_name: str) -> str:
+        """
         Replace missing values in the specified column with the column's mean value.
 
         This function calculates the mean of the specified column, replaces any missing
@@ -48,13 +53,12 @@ def handle_missing_values(column_name: str) -> str:
             A string summarizing the operation, including the mean value used for replacement
             and the number of missing values that were filled.
         """
-    mean_value = df[column_name].mean()
-    missing_count = df[column_name].isna().sum()
-    df[column_name] = df[column_name].fillna(mean_value)
-    return (f"The mean value for '{column_name}' is {mean_value:.2f}. "
-            f"Replaced {missing_count} missing values with this mean.")
+        mean_value = self.df[column_name].mean()
+        missing_count = self.df[column_name].isna().sum()
+        self.df[column_name] = self.df[column_name].fillna(mean_value)
+        return (f"The mean value for '{column_name}' is {mean_value:.2f}. "
+                f"Replaced {missing_count} missing values with this mean.")
 
-
-def get_tools() -> list:
-    return [get_dataset_summary, handle_missing_values]
+    def get_tools(self) -> list:
+        return [self.get_dataset_summary, self.handle_missing_values]
 
