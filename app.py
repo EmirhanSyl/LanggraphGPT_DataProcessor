@@ -17,25 +17,14 @@ class App:
         self.app_runnable.get_graph().draw_png("workflow_graph.png")
 
     # Helper function to stream output from the graph
-    def stream_app_catch_tool_calls(self, inputs, thread) -> tuple[Optional[AIMessage], Optional[Any]]:
+    def stream_app_catch_tool_calls(self, inputs=None) -> Optional[AIMessage]:
         """Stream app, catching tool calls."""
-        tool_call_message = None
+        model_input = {"messages": [inputs]}
         response_message = None
-        for event in self.app_runnable.stream(inputs, thread, stream_mode="values"):
+        for event in self.app_runnable.stream(model_input, self.thread, stream_mode="values"):
             message = event["messages"][-1]
-            if isinstance(message, AIMessage) and message.tool_calls:
-                tool_call_message = message
-            else:
-                message.pretty_print()
-                response_message = message
+            message.pretty_print()
+            response_message = message
 
-        return tool_call_message, response_message
-
-    def main(self, human_message=None):
-        inputs = [human_message]
-        tool_call_message, response_message = self.stream_app_catch_tool_calls({"messages": inputs}, self.thread)
-
-        response = response_message.content if response_message else ""
-
-        return response, tool_call_message
+        return response_message
 
