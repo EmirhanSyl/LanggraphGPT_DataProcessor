@@ -1,6 +1,6 @@
 import pandas as pd
 from langchain.tools import tool
-from langgraph.prebuilt import ToolExecutor
+from langgraph.prebuilt import ToolExecutor, ToolNode
 
 
 class ToolEditor:
@@ -8,6 +8,8 @@ class ToolEditor:
         self.df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
         self.tools = self.get_tools()
         self.tool_executor = ToolExecutor(self.tools)
+        self.tool_node = ToolNode(self.tools)
+
 
     @tool
     def get_dataset_summary(self):

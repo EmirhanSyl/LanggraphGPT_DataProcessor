@@ -19,7 +19,7 @@ async def on_chat_start():
     initial_state = {
         "messages": [AIMessage(content=response.content)],
         "last_message_type": MessageTypes.CHAT,  # Initialize with a default value
-        "last_called_tool": {}  # Initialize as an empty dictionary
+        "last_called_tool": [{}]  # Initialize as an empty dictionary
     }
 
     # Start the workflow with the initial state
@@ -57,22 +57,24 @@ async def on_action_approve(action):
         tool_call_message.id = str(uuid.uuid4())
 
         snapshot.values['messages'] += [HumanMessage(content="I approved to use this tool. Tool executed."), tool_call_message]
-        app.app_runnable.update_state(app.thread, snapshot.values, as_node="__start__")
+        app.app_runnable.update_state(app.thread, snapshot.values)
         await action.remove()
 
-        app.stream_app_catch_tool_calls(HumanMessage(content="Give the result of the tool usage."))
+        response = app.stream_app_catch_tool_calls(HumanMessage(content="Give the result of the tool usage."))
+        await cl.Message(content=response.content).send()
 
 
 @cl.action_callback("deny_tool_use")
-async def on_action_approve(action):
+async def on_action_deny(action):
     if action.value == "deny":
         snapshot = app.app_runnable.get_state(app.thread)
         snapshot.values['messages'] += [HumanMessage(content="I denied to use this tool. Tool didn't called.")]
 
-        app.app_runnable.update_state(app.thread, snapshot.values, as_node="agent")
+        app.app_runnable.update_state(app.thread, snapshot.values, as_node="__start__")
         await action.remove()
 
-        app.stream_app_catch_tool_calls(HumanMessage(content="Generate a notification message about user denied the tool call."))
+        response = app.stream_app_catch_tool_calls(HumanMessage(content="Generate a notification message about user denied the tool call."))
+        await cl.Message(content=response.content).send()
 
 
 # Helper function to construct message asking for verification
