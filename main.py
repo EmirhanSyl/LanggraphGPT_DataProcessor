@@ -14,7 +14,7 @@ async def on_chat_start():
     hi_msg_prompt = ("You are a helpful AI agent for processing the data using tools. Your name is 'beeg'. Give a nice,"
                      " friendly and helpful message to welcome the user.")
     cl.user_session.set("runnable", app.app_runnable)
-    response = app.stream_app_catch_tool_calls(HumanMessage(content=hi_msg_prompt))
+    response = app.stream_app_catch_tool_calls({"messages": [HumanMessage(content=hi_msg_prompt)]})
 
     initial_state = {
         "messages": [AIMessage(content=response.content)],
@@ -32,7 +32,7 @@ async def on_chat_start():
 async def on_message(message: cl.Message):
     # Create a human message
     human_message = HumanMessage(content=message.content)
-    response = app.stream_app_catch_tool_calls(human_message)
+    response = app.stream_app_catch_tool_calls({"messages": [human_message]})
 
     snapshot = app.app_runnable.get_state(app.thread)
     print(snapshot.values)
@@ -60,7 +60,7 @@ async def on_action_approve(action):
         app.app_runnable.update_state(app.thread, snapshot.values)
         await action.remove()
 
-        response = app.stream_app_catch_tool_calls(HumanMessage(content="Give the result of the tool usage."))
+        response = app.stream_app_catch_tool_calls()
         await cl.Message(content=response.content).send()
 
 
@@ -73,7 +73,7 @@ async def on_action_deny(action):
         app.app_runnable.update_state(app.thread, snapshot.values, as_node="__start__")
         await action.remove()
 
-        response = app.stream_app_catch_tool_calls(HumanMessage(content="Generate a notification message about user denied the tool call."))
+        response = app.stream_app_catch_tool_calls({"messages": [HumanMessage(content="Generate a notification message about user denied the tool call.")]})
         await cl.Message(content=response.content).send()
 
 

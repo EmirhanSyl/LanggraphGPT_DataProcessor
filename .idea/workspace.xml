@@ -7,13 +7,8 @@
     <list default="true" id="9842835c-7a46-4f54-9327-37ba2ff801da" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jupyter/data_reduction.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/jupyter/data_reduction.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jupyter/data_type_converter.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/jupyter/data_type_converter.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jupyter/datetime_handler.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/jupyter/datetime_handler.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jupyter/feature_extraction.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/jupyter/feature_extraction.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jupyter/missing_value_handler.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/jupyter/missing_value_handler.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jupyter/outlier_handler.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/jupyter/outlier_handler.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/jupyter/text_cleaner.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/jupyter/text_cleaner.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

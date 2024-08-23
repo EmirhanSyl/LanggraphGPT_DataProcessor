@@ -21,7 +21,7 @@ class App:
         """Stream app, catching tool calls."""
         model_input = {"messages": [inputs]}
         response_message = None
-        for event in self.app_runnable.stream(model_input, self.thread, stream_mode="values"):
+        for event in self.app_runnable.stream(inputs, self.thread, stream_mode="values"):
             message = event["messages"][-1]
             message.pretty_print()
             response_message = message
