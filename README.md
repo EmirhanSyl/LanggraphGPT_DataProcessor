@@ -1,5 +1,10 @@
 # Langgraph Data Processor LLM
 
+An adjusted LLM model that can do data processing jobs for you!
+## Example Tool Usage
+![image](https://github.com/user-attachments/assets/1c800150-f442-4c7c-9397-cc1c4cdc2d6b)
+
+
 ### Agent Graph Structure
 ![workflow_graph](https://github.com/user-attachments/assets/8ec2cf89-fbcd-4c2c-bd40-c5e4db4a08a3)
 
