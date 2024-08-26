@@ -22,7 +22,7 @@ class DataVisualizer:
 
     @ColumnTypeValidators.is_column_exists
     def plot_bar(self, dataframe: pd.DataFrame, column: Union[str, int], column2: Union[str, int]) -> None:
-        """Plot a bar chart for a specified column."""
+        """Plot a bar chart for a specified columns."""
         plt.figure(figsize=(12, 8))
 
         sns.barplot(x=column, y=column2, data=dataframe.sort_values(column, ascending=False), palette='viridis')

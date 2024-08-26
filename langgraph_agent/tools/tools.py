@@ -1,6 +1,7 @@
 import pandas as pd
 from langchain.tools import tool
 from langgraph.prebuilt import ToolExecutor, ToolNode
+import matplotlib.pyplot as plt
 
 class ToolEditor:
     def __init__(self) -> None:
@@ -59,4 +60,13 @@ def handle_missing_values(column_name: str) -> str:
     return (f"The mean value for '{column_name}' is {mean_value:.2f}. "
             f"Replaced {missing_count} missing values with this mean.")
 
-
+@tool
+def plot_bar(self, dataframe: pd.DataFrame, column: str, column2: str) -> None:
+    """Plot a bar chart for a specified columns"""
+    plt.figure(figsize=(12, 8))
+    name1 = str(column)
+    name2 = str(column2)
+    plt.title(f'Bar Chart of {name1}, {name2}')
+    plt.xlabel(column)
+    plt.ylabel(column2)
+    plt.show()
