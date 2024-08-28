@@ -8,6 +8,7 @@ from .agent_state import State, MessageTypes
 from .tools.tools import ToolEditor
 from .models.llama_model import ModelLLama
 
+import plotly.graph_objects as go
 
 class Workflow:
     def __init__(self):
@@ -64,7 +65,6 @@ class Workflow:
             content=str(response), name=action.tool, tool_call_id=tool_call["id"]
         )
 
-        # tool_node.invoke({"messages": [message_with_single_tool_call]})
         # We return a list, because this will get added to the existing list
         return {"messages": [tool_message]}
 
