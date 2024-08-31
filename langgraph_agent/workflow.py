@@ -18,6 +18,22 @@ class Workflow:
         self.workflow_model = self.setup_workflow()
 
     # __________________________ NODES __________________________
+    def generate_greeting(self, state):
+        messages = state["messages"]
+
+        hi_msg_prompt = (
+            "You are a helpful AI agent for processing the data using tools. Your name is 'beeg'. Give a nice,"
+            " friendly and helpful message to welcome the user. After that request to upload a csv dataset from user.")
+        messages += [HumanMessage(content=hi_msg_prompt)]
+        response = self.model.llm.invoke(messages)
+
+        new_state = {
+            "messages": [response],
+            "last_message_type": MessageTypes.CHAT,
+        }
+        return new_state
+
+
     # Define the function that determines whether to continue or not
     def should_continue(self, state):
         print("Conditional Edge")
@@ -107,12 +123,15 @@ class Workflow:
     # __________________________ WORKFLOW __________________________
     def setup_workflow(self):
         workflow = StateGraph(State)
+
+        workflow.add_node("greet", self.generate_greeting)
         workflow.add_node("agent", self.call_model)
         workflow.add_node("generate_verification", self.generate_dynamic_verification)
         workflow.add_node("action", self.call_tool)
         workflow.add_node("action_result", self.generate_tool_result_message)
 
-        workflow.add_edge(START, "agent")
+        workflow.add_edge(START, "greet")
+        workflow.add_edge("greet", "agent")
         workflow.add_edge("generate_verification", "action")
         workflow.add_edge("action", "action_result")
         workflow.add_edge("action_result", END)

@@ -77,20 +77,7 @@ async def on_action_deny(action):
         await cl.Message(content=response.content).send()
 
 
-# Helper function to construct message asking for verification
-def generate_verification_message(message: AIMessage) -> AIMessage:
-    """Generate "verification message" from message with tool calls."""
-    serialized_tool_calls = json.dumps(
-        message.tool_calls,
-        indent=2,
-    )
-    return AIMessage(
-        content=(
-            "I plan to invoke the following tools, do you approve?\n\n"
-            "Type 'y' if you do, anything else to stop.\n\n"
-            f"{serialized_tool_calls}"
-        ),
-        id=message.id,
-    )
-
-
+async def send_chainlit_message(content):
+    # Create and send the message
+    message = cl.Message(content=content)
+    await message.send()
