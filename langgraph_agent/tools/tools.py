@@ -14,7 +14,7 @@ class ToolEditor:
         self.tool_node = ToolNode(self.tools)
 
     def get_tools(self) -> list:
-        return [summarize_dataset, handle_missing_values]
+        return [summarize_dataset, calculate_missing_values, handle_missing_values]
 
 
 df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
@@ -57,10 +57,10 @@ def summarize_dataset() -> dict:
     for column in dataset.columns:
         col_data = dataset[column]
         summary[column]['type'] = str(col_data.dtype)
-        summary[column]['min'] = col_data.min()
-        summary[column]['max'] = col_data.max()
-        summary[column]['mean'] = col_data.mean() if col_data.dtype in ['int64', 'float64'] else None
-        summary[column]['median'] = col_data.median() if col_data.dtype in ['int64', 'float64'] else None
+        summary[column]['min'] = float(col_data.min()) if col_data.dtype in ['int64', 'float64'] else col_data.min()
+        summary[column]['max'] = float(col_data.max()) if col_data.dtype in ['int64', 'float64'] else col_data.max()
+        summary[column]['mean'] = float(col_data.mean()) if col_data.dtype in ['int64', 'float64'] else None
+        summary[column]['median'] = float(col_data.median()) if col_data.dtype in ['int64', 'float64'] else None
 
         try:
             summary[column]['mode'] = mode(col_data.dropna())
@@ -71,24 +71,28 @@ def summarize_dataset() -> dict:
 
 
 @tool
-def get_dataset_summary():
+def calculate_missing_values() -> dict:
     """
-    Generate a summary of the dataset.
-    This function retrieves a dataset,
-    computes descriptive statistics for all numerical columns in the dataset,
-    and returns the summary as a formatted string.
-    Parameters:
-    ----------
-    query : str
-        The query should be a valid string that can be used to fetch the relevant subset of the dataset.
+    Calculate the missing value ratios and counts for each column in a DataFrame.
+
     Returns:
-    -------
-    str
-        A string representation of the summary statistics for the dataset,
-        including metrics such as count, mean, standard deviation, min, max,
-        and quartiles for each numerical column.
+    - dict: A dictionary where the keys are column names and the values are dictionaries containing the
+      count and ratio of missing values for each column.
     """
-    return df.describe().to_string()
+    missing_values_info = {}
+
+    total_rows = len(df)
+
+    for column in df.columns:
+        missing_count = df[column].isna().sum()
+        missing_ratio = missing_count / total_rows
+
+        missing_values_info[column] = {
+            'missing_count': int(missing_count),
+            'missing_ratio': missing_ratio
+        }
+
+    return missing_values_info
 
 
 @tool

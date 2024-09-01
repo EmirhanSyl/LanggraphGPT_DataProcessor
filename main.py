@@ -22,14 +22,25 @@ async def on_chat_start():
             content=response.content, accept=["text/csv"], max_files=1
         ).send()
 
+    await cl.Message(content="Preparing dataset summary...").send()
     dataset = files[0]
     set_dataset(dataset.path)
     app.stream_app_catch_tool_calls()
 
     snapshot = app.app_runnable.get_state(app.thread)
-    message = snapshot.values["messages"][-2]
     print(snapshot.values)
-    await cl.Message(content=message.content).send()
+    tool_message = snapshot.values["messages"][-3]
+    tool_message_json = json.loads(tool_message.content)
+    await cl.Message(content=tool_message_json).send()
+
+    result_message = snapshot.values["messages"][-1]
+    await cl.Message(content=result_message.content).send()
+
+    actions = [
+        cl.Action(name="approve_preprocess", value="approve", description="approve"),
+        cl.Action(name="deny_preprocess", value="deny", description="deny"),
+    ]
+    await cl.Message(content="Do you want to continue with preprocessing steps?", actions=actions).send()
 
 
 # Set up Chainlit app
@@ -80,6 +91,29 @@ async def on_action_deny(action):
 
         response = app.stream_app_catch_tool_calls({"messages": [HumanMessage(content="Generate a notification message about user denied the tool call.")]})
         await cl.Message(content=response.content).send()
+
+
+@cl.action_callback("approve_preprocess")
+async def on_action_preprocessing_approve(action):
+    app.stream_app_catch_tool_calls()
+    await action.remove()
+
+    snapshot = app.app_runnable.get_state(app.thread)
+
+    tool_message = snapshot.values["messages"][-4]
+    tool_message_json = json.loads(tool_message.content)
+    await cl.Message(content=tool_message_json).send()
+
+    result_message = snapshot.values["messages"][-2]
+    await cl.Message(content=result_message.content).send()
+
+@cl.action_callback("deny_preprocess")
+async def on_action_preprocessing_deny(action):
+    snapshot = app.app_runnable.get_state(app.thread)
+    app.app_runnable.update_state(app.thread, snapshot.values, as_node="__end__")
+
+    app.stream_app_catch_tool_calls()
+    await action.remove()
 
 
 async def send_chainlit_message(content):

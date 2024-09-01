@@ -37,7 +37,6 @@ class Workflow:
         return new_state
 
     def generate_dataset_summary(self, state):
-        print("summary")
         messages = state["messages"]
 
         tool_call = {
@@ -52,6 +51,8 @@ class Workflow:
             tool_input=tool_call["args"],
         )
         response = self.tool_executor.invoke(action)
+        print(response)
+        response = json.dumps(response, indent=4)
 
         tool_message = ToolMessage(
             content=str(response),
@@ -73,6 +74,47 @@ class Workflow:
             "messages": messages,
             "last_message_type": MessageTypes.CHAT,
             "last_called_tool": [tool_call]
+        }
+        return new_state
+
+    def report_missing_ratios(self, state):
+        messages = state["messages"]
+
+        tool_call = {
+            "name": "calculate_missing_values",
+            "args": {},
+            "id": "tool_call_2"  # Unique identifier for the tool call
+        }
+
+        # Create the ToolInvocation object
+        action = ToolInvocation(
+            tool=tool_call["name"],
+            tool_input=tool_call["args"],
+        )
+        response = self.tool_executor.invoke(action)
+        response = json.dumps(response, indent=4)
+
+        tool_message = ToolMessage(
+            content=str(response),
+            name=action.tool,
+            tool_call_id=tool_call["id"]
+        )
+
+        # We return a list, because this will get added to the existing list
+        messages += [tool_message]
+
+        result_prompt = (f"Write a result message about user's dataset. The following dictionary is the missing value "
+                         f"ratios of the dataset.\n{response}\nExamine the results for user. If missing value ratio of "
+                         f"any column is bigger then 5%, warn the user about this data considered as manipulated")
+
+        messages += [HumanMessage(content=result_prompt)]
+        response = self.model.llm.invoke(messages)
+        messages += [response]
+
+        new_state = {
+            "messages": messages,
+            "last_message_type": MessageTypes.CHAT,
+            "last_called_tool": state["last_called_tool"] + [tool_call]
         }
         return new_state
 
@@ -168,6 +210,7 @@ class Workflow:
 
         workflow.add_node("greet", self.generate_greeting)
         workflow.add_node("summary", self.generate_dataset_summary)
+        workflow.add_node("report_missing", self.report_missing_ratios)
         workflow.add_node("agent", self.call_model)
         workflow.add_node("generate_verification", self.generate_dynamic_verification)
         workflow.add_node("action", self.call_tool)
@@ -175,7 +218,8 @@ class Workflow:
 
         workflow.add_edge(START, "greet")
         workflow.add_edge("greet", "summary")
-        workflow.add_edge("summary", "agent")
+        workflow.add_edge("summary", "report_missing")
+        workflow.add_edge("report_missing", "agent")
         workflow.add_edge("generate_verification", "action")
         workflow.add_edge("action", "action_result")
         workflow.add_edge("action_result", END)
