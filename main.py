@@ -5,26 +5,31 @@ import chainlit as cl
 from langchain_core.messages import HumanMessage, AIMessage
 from langgraph_agent.agent_state import MessageTypes
 from app import App
+from langgraph_agent.tools.tools import set_dataset
 
 app = App()
 
 
 @cl.on_chat_start
 async def on_chat_start():
-    hi_msg_prompt = ("You are a helpful AI agent for processing the data using tools. Your name is 'beeg'. Give a nice,"
-                     " friendly and helpful message to welcome the user.")
     cl.user_session.set("runnable", app.app_runnable)
-    response = app.stream_app_catch_tool_calls({"messages": [HumanMessage(content=hi_msg_prompt)]})
+    response = app.stream_app_catch_tool_calls({"messages": [HumanMessage(content="")]})
+    files = None
 
-    initial_state = {
-        "messages": [AIMessage(content=response.content)],
-        "last_message_type": MessageTypes.CHAT,  # Initialize with a default value
-        "last_called_tool": [{}]  # Initialize as an empty dictionary
-    }
+    # Wait for the user to upload a file
+    while files is None:
+        files = await cl.AskFileMessage(
+            content=response.content, accept=["text/csv"], max_files=1
+        ).send()
 
-    # Start the workflow with the initial state
-    app.app_runnable.update_state(app.thread, initial_state)
-    await cl.Message(content=response.content).send()
+    dataset = files[0]
+    set_dataset(dataset.path)
+    app.stream_app_catch_tool_calls()
+
+    snapshot = app.app_runnable.get_state(app.thread)
+    message = snapshot.values["messages"][-2]
+    print(snapshot.values)
+    await cl.Message(content=message.content).send()
 
 
 # Set up Chainlit app

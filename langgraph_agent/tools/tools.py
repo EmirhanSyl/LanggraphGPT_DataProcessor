@@ -1,3 +1,7 @@
+from collections import defaultdict
+from statistics import mode, StatisticsError
+
+import pandas
 import pandas as pd
 from langchain.tools import tool
 from langgraph.prebuilt import ToolExecutor, ToolNode
@@ -10,10 +14,60 @@ class ToolEditor:
         self.tool_node = ToolNode(self.tools)
 
     def get_tools(self) -> list:
-        return [get_dataset_summary, handle_missing_values]
+        return [summarize_dataset, handle_missing_values]
 
 
 df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
+dataset = None
+
+
+def set_dataset(path):
+    global dataset
+    dataset = pd.read_csv(path)
+
+
+@tool
+def summarize_dataset() -> dict:
+    """
+        Summarizes a pandas DataFrame by calculating the data type, minimum, maximum, mean, median,
+        and mode for each column in the dataset.
+
+        Returns:
+        --------
+        dict
+            A dictionary where each key is a column name from the DataFrame and each value
+            is another dictionary containing the following keys:
+            - 'type': The data type of the column.
+            - 'min': The minimum value in the column.
+            - 'max': The maximum value in the column.
+            - 'mean': The mean value of the column (if numeric).
+            - 'median': The median value of the column (if numeric).
+            - 'mode': The mode of the column (if applicable; None if multimodal).
+
+        Notes:
+        ------
+        - The 'mean' and 'median' are calculated only for columns with numeric data types ('int64', 'float64').
+        - The 'mode' is calculated by dropping NaN values from the column. If the column is multimodal
+          or contains no valid values, the 'mode' will be set to None.
+        - This function is designed to handle columns with mixed data types, and it ensures that
+          the appropriate statistical measures are calculated based on the column's data type.
+        """
+    summary = defaultdict(dict)
+
+    for column in dataset.columns:
+        col_data = dataset[column]
+        summary[column]['type'] = str(col_data.dtype)
+        summary[column]['min'] = col_data.min()
+        summary[column]['max'] = col_data.max()
+        summary[column]['mean'] = col_data.mean() if col_data.dtype in ['int64', 'float64'] else None
+        summary[column]['median'] = col_data.median() if col_data.dtype in ['int64', 'float64'] else None
+
+        try:
+            summary[column]['mode'] = mode(col_data.dropna())
+        except StatisticsError:
+            summary[column]['mode'] = None
+
+    return dict(summary)
 
 
 @tool

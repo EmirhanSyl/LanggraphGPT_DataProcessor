@@ -5,7 +5,7 @@ from langgraph.prebuilt import ToolExecutor, ToolInvocation, ToolNode
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from .agent_state import State, MessageTypes
-from .tools.tools import ToolEditor
+from .tools.tools import ToolEditor, summarize_dataset
 from .models.llama_model import ModelLLama
 
 import plotly.graph_objects as go
@@ -19,6 +19,7 @@ class Workflow:
 
     # __________________________ NODES __________________________
     def generate_greeting(self, state):
+        print("Greet")
         messages = state["messages"]
 
         hi_msg_prompt = (
@@ -26,13 +27,54 @@ class Workflow:
             " friendly and helpful message to welcome the user. After that request to upload a csv dataset from user.")
         messages += [HumanMessage(content=hi_msg_prompt)]
         response = self.model.llm.invoke(messages)
+        messages += [response]
 
         new_state = {
-            "messages": [response],
+            "messages": messages,
             "last_message_type": MessageTypes.CHAT,
+            "last_called_tool": [{}]
         }
         return new_state
 
+    def generate_dataset_summary(self, state):
+        print("summary")
+        messages = state["messages"]
+
+        tool_call = {
+            "name": "summarize_dataset",
+            "args": {},
+            "id": "tool_call_1"  # Unique identifier for the tool call
+        }
+
+        # Create the ToolInvocation object
+        action = ToolInvocation(
+            tool=tool_call["name"],
+            tool_input=tool_call["args"],
+        )
+        response = self.tool_executor.invoke(action)
+
+        tool_message = ToolMessage(
+            content=str(response),
+            name=action.tool,
+            tool_call_id=tool_call["id"]
+        )
+
+        # We return a list, because this will get added to the existing list
+        messages += [tool_message]
+
+        result_prompt = (f"Write a result message about user's dataset. The following dictionary is the summary of the "
+                         f"dataset.\n{response}\nGive dataset summary to the user and examine the results accordingly")
+
+        messages += [HumanMessage(content=result_prompt)]
+        response = self.model.llm.invoke(messages)
+        messages += [response]
+
+        new_state = {
+            "messages": messages,
+            "last_message_type": MessageTypes.CHAT,
+            "last_called_tool": [tool_call]
+        }
+        return new_state
 
     # Define the function that determines whether to continue or not
     def should_continue(self, state):
@@ -125,13 +167,15 @@ class Workflow:
         workflow = StateGraph(State)
 
         workflow.add_node("greet", self.generate_greeting)
+        workflow.add_node("summary", self.generate_dataset_summary)
         workflow.add_node("agent", self.call_model)
         workflow.add_node("generate_verification", self.generate_dynamic_verification)
         workflow.add_node("action", self.call_tool)
         workflow.add_node("action_result", self.generate_tool_result_message)
 
         workflow.add_edge(START, "greet")
-        workflow.add_edge("greet", "agent")
+        workflow.add_edge("greet", "summary")
+        workflow.add_edge("summary", "agent")
         workflow.add_edge("generate_verification", "action")
         workflow.add_edge("action", "action_result")
         workflow.add_edge("action_result", END)
