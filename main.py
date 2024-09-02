@@ -100,12 +100,13 @@ async def on_action_preprocessing_approve(action):
 
     snapshot = app.app_runnable.get_state(app.thread)
 
-    tool_message = snapshot.values["messages"][-4]
+    tool_message = snapshot.values["messages"][-3]
     tool_message_json = json.loads(tool_message.content)
     await cl.Message(content=tool_message_json).send()
 
-    result_message = snapshot.values["messages"][-2]
+    result_message = snapshot.values["messages"][-1]
     await cl.Message(content=result_message.content).send()
+    app.stream_app_catch_tool_calls()
 
 @cl.action_callback("deny_preprocess")
 async def on_action_preprocessing_deny(action):

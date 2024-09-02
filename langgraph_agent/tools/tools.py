@@ -4,6 +4,7 @@ from statistics import mode, StatisticsError
 import pandas
 import pandas as pd
 from langchain.tools import tool
+from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import ToolExecutor, ToolNode
 import matplotlib.pyplot as plt
 
@@ -14,11 +15,12 @@ class ToolEditor:
         self.tool_node = ToolNode(self.tools)
 
     def get_tools(self) -> list:
-        return [summarize_dataset, calculate_missing_values, handle_missing_values]
+        return [summarize_dataset, calculate_missing_values, handle_missing_values,
+                replace_with_mean, replace_with_mode, replace_with_median]
 
 
 df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
-dataset = None
+global dataset
 
 
 def set_dataset(path):
@@ -81,10 +83,10 @@ def calculate_missing_values() -> dict:
     """
     missing_values_info = {}
 
-    total_rows = len(df)
+    total_rows = len(dataset)
 
-    for column in df.columns:
-        missing_count = df[column].isna().sum()
+    for column in dataset.columns:
+        missing_count = dataset[column].isna().sum()
         missing_ratio = missing_count / total_rows
 
         missing_values_info[column] = {
@@ -117,3 +119,84 @@ def handle_missing_values(column_name: str) -> str:
     df[column_name] = df[column_name].fillna(mean_value)
     return (f"The mean value for '{column_name}' is {mean_value:.2f}. "
             f"Replaced {missing_count} missing values with this mean.")
+
+
+@tool
+def replace_with_mean(column_name: str) -> str:
+    """
+    Replace missing values in the specified column with the mean of the column.
+
+    Parameters:
+    - df: pd.DataFrame: The DataFrame containing the column.
+    - column_name: str: The name of the column to process.
+
+    Returns:
+    - str: A message describing the operation performed, including the mean value used and the number of missing values filled.
+    """
+    if pd.api.types.is_numeric_dtype(dataset[column_name]):
+        mean_value = dataset[column_name].mean()
+        missing_count = dataset[column_name].isna().sum()
+        dataset[column_name].fillna(mean_value, inplace=True)
+        return f"Filled {missing_count} missing values in '{column_name}' with mean value {mean_value}."
+    else:
+        raise ValueError(f"Column '{column_name}' is not numeric.")
+
+
+@tool
+def replace_with_median(column_name: str) -> str:
+    """
+    Replace missing values in the specified column with the median of the column.
+
+    Parameters:
+    - df: pd.DataFrame: The DataFrame containing the column.
+    - column_name: str: The name of the column to process.
+
+    Returns:
+    - str: A message describing the operation performed, including the median value used and the number of missing values filled.
+    """
+    if pd.api.types.is_numeric_dtype(dataset[column_name]):
+        median_value = dataset[column_name].median()
+        missing_count = dataset[column_name].isna().sum()
+        dataset[column_name].fillna(median_value, inplace=True)
+        return f"Filled {missing_count} missing values in '{column_name}' with median value {median_value}."
+    else:
+        raise ValueError(f"Column '{column_name}' is not numeric.")
+
+
+@tool
+def replace_with_mode(column_name: str) -> str:
+    """
+    Replace missing values in the specified column with the mode of the column.
+
+    Parameters:
+    - df: pd.DataFrame: The DataFrame containing the column.
+    - column_name: str: The name of the column to process.
+
+    Returns:
+    - str: A message describing the operation performed, including the mode value used and the number of missing values filled.
+    """
+    mode_value = dataset[column_name].mode()[0]
+    missing_count = dataset[column_name].isna().sum()
+    dataset[column_name].fillna(mode_value, inplace=True)
+    return f"Filled {missing_count} missing values in '{column_name}' with mode value '{mode_value}'."
+
+
+def calculate_total_missing_values() -> int:
+    total_missing = dataset.isna().sum().sum()
+    return total_missing
+
+
+def generate_tool_calls_for_missing_values() -> list:
+    tool_calls = []
+
+    for column in dataset.columns:
+        if dataset[column].isna().sum() == 0:
+            continue
+        if pd.api.types.is_numeric_dtype(dataset[column]):
+            tool_calls.append(f"Tool: replace_with_mean(), Args: column: '{column}'\n")
+        elif pd.api.types.is_string_dtype(dataset[column]):
+            tool_calls.append(f"Tool: replace_with_mode(), Args: column: '{column}'\n")
+        elif pd.api.types.is_datetime64_any_dtype(dataset[column]):
+            tool_calls.append(f"Tool: replace_with_median(), Args: column: '{column}'\n")
+
+    return tool_calls

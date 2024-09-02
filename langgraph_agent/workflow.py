@@ -5,7 +5,7 @@ from langgraph.prebuilt import ToolExecutor, ToolInvocation, ToolNode
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from .agent_state import State, MessageTypes
-from .tools.tools import ToolEditor, summarize_dataset
+from .tools.tools import ToolEditor, calculate_total_missing_values, generate_tool_calls_for_missing_values
 from .models.llama_model import ModelLLama
 
 import plotly.graph_objects as go
@@ -118,6 +118,32 @@ class Workflow:
         }
         return new_state
 
+    def should_handle_missings(self, state):
+        if calculate_total_missing_values() > 0:
+            return "handle"
+        else:
+            return "skip"
+
+    def handle_missings(self, state):
+        tools = generate_tool_calls_for_missing_values()
+        tool_call_messages = []
+        messages = state["messages"]
+
+        for tool_prompt in tools:
+            content = f"To handle missing values, use the following tool call:\n{tool_prompt}"
+            messages += [HumanMessage(content=content)]
+            messages += [self.model.llm.invoke(messages)]
+            tool_call_messages += messages[-1]
+
+        new_state = {
+            "messages": messages,
+            "last_message_type": MessageTypes.TOOL_USE,
+        }
+        print(f"State:{state}")
+        return new_state
+
+
+
     # Define the function that determines whether to continue or not
     def should_continue(self, state):
         print("Conditional Edge")
@@ -211,6 +237,7 @@ class Workflow:
         workflow.add_node("greet", self.generate_greeting)
         workflow.add_node("summary", self.generate_dataset_summary)
         workflow.add_node("report_missing", self.report_missing_ratios)
+        workflow.add_node("handle_missings", self.handle_missings)
         workflow.add_node("agent", self.call_model)
         workflow.add_node("generate_verification", self.generate_dynamic_verification)
         workflow.add_node("action", self.call_tool)
@@ -219,12 +246,16 @@ class Workflow:
         workflow.add_edge(START, "greet")
         workflow.add_edge("greet", "summary")
         workflow.add_edge("summary", "report_missing")
-        workflow.add_edge("report_missing", "agent")
-        workflow.add_edge("generate_verification", "action")
-        workflow.add_edge("action", "action_result")
-        workflow.add_edge("action_result", END)
 
-        # We now add a conditional edge
+        workflow.add_conditional_edges(
+            "report_missing",
+            self.should_handle_missings,
+            {
+                "handle": "handle_missings",
+                "skip": "agent",
+            },
+        )
+
         workflow.add_conditional_edges(
             "agent",
             self.should_continue,
@@ -234,6 +265,10 @@ class Workflow:
                 "end": END,
             },
         )
+
+        workflow.add_edge("generate_verification", "action")
+        workflow.add_edge("action", "action_result")
+        workflow.add_edge("action_result", END)
 
         return workflow
 
