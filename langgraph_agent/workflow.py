@@ -5,11 +5,10 @@ from langgraph.prebuilt import ToolExecutor, ToolInvocation, ToolNode
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from .agent_state import State, MessageTypes
-from .tools.tools import (ToolEditor, calculate_total_missing_values, generate_tool_calls_for_missing_values,
-                          get_dataset_sample)
+from .tools.tools import (ToolEditor, check_preprocess_needed, get_dataset_sample, calculate_total_missing_values,
+                          should_handle_outliers)
 from .models.llama_model import ModelLLama
 
-import plotly.graph_objects as go
 
 class Workflow:
     def __init__(self):
@@ -61,7 +60,7 @@ class Workflow:
             "After that, request to upload a CSV dataset from the user."
         )
         # No tool is used for greeting, so tool_call is None
-        return self.process_tool_task(state,message_prompt=greeting_prompt)
+        return self.process_tool_task(state, message_prompt=greeting_prompt)
 
     def generate_dataset_summary(self, state):
         tool_call = {
@@ -72,16 +71,84 @@ class Workflow:
         dataset_sample = get_dataset_sample()
         dataset_summary_prompt = (
             f"Write a result message about the user's dataset. Here is the part of the dataset: \n'{dataset_sample}'\n "
-            f"The following dictionary is the summary of the dataset.\n"
+            f"The following dictionary is the summary of the dataset. If the missing value ratio of any column is "
+            f"greater than 5%, warn the user that the data might be manipulated.\n"
             f"Give a very detailed dataset summary to the user and examine the results accordingly.\n"
         )
         return self.process_tool_task(state,message_prompt=dataset_summary_prompt, tool_call=tool_call)
 
+    def check_preprocess_needed(self, state):
+        return check_preprocess_needed()
+
+    def start_preprocess(self, state):
+        process_details = """This function follows a detailed multistep process to manage missing values and outliers for different types
+    of columns (numeric, string, and datetime). It modifies the global 'dataset' DataFrame in place by applying
+    the following operations:
+
+    Steps:
+    1. **Type Conversion**:
+       - For all columns, if the column is of 'Object' dtype, it is checked whether it can be converted
+         to either 'String' or 'Datetime'. Conversion attempts:
+         - Convert to 'datetime' using `pd.to_datetime()`. If the conversion fails (ValueError or TypeError),
+           the column is converted to a 'String' type instead.
+
+    2. **Missing Value Ratio Check**:
+       - For each column in the DataFrame, the percentage of missing values is calculated.
+       - If a column has more than 35% missing values, it is dropped from the DataFrame completely.
+
+    3. **Handling Numeric Columns**:
+       - For each numeric column in the dataset:
+         - A normality test (Shapiro-Wilk) is conducted to determine if the column is normally distributed.
+         - If the column is normally distributed, outliers are detected using the Z-score method (values with Z > 3
+           are considered outliers).
+         - If the column is not normally distributed, the IQR (Interquartile Range) method is used for outlier detection.
+         - The ratio of outliers to total values is calculated:
+           - If the outlier ratio is greater than 10%, missing values in the column are filled with the **median**.
+           - Otherwise, missing values are filled with the **mean** of the column.
+
+    4. **Handling String Columns**:
+       - For each string column (dtype 'Object' or 'String'), missing values are filled with the constant value
+         "unknown".
+
+    5. **Handling Datetime Columns**:
+       - For each datetime column:
+         - Datetime values are converted to numeric timestamps for outlier detection.
+         - Based on the normality of the column, outliers are detected using either the Z-score or IQR method.
+         - The ratio of outliers to total values is calculated:
+           - If the outlier ratio is greater than 15%, missing values in the column are filled with the **median**
+             of the column.
+           - If the outlier ratio is less than 15%, the column is checked to see if it represents a time series:
+             - A time series is determined by checking if the data is sorted by time and has a regular frequency.
+             - If the column is a time series, missing values are filled using **forward fill** (ffill) or
+               **backward fill** (bfill).
+             - If it is not a time series, missing values are filled with the **mean** of the column."""
+        greeting_prompt = (
+            f"Write an information message about how preprocessing steps will be done. Here I'm giving you to detailed "
+            f"explanation: {process_details}"
+        )
+        return self.process_tool_task(state, message_prompt=greeting_prompt)
+
     def should_handle_missings(self, state):
-        if calculate_total_missing_values() > 0:
-            return "handle"
-        else:
-            return "skip"
+        return "handle" if calculate_total_missing_values() > 0 else "skip"
+
+    def handle_missing(self, state):
+        tool_call = {
+            "name": "handle_missing_values",
+            "args": {},
+            "id": "tool_call_3"
+        }
+        missing_ratio_prompt = (
+            "Write a result message about the user's dataset. The following dictionary contains the missing value "
+            "ratios.\n Examine the results for the user. If the missing value ratio of any column is greater than 5%, "
+            "warn the user that the data might be manipulated.\n"
+        )
+        return self.process_tool_task(state, tool_call=tool_call, message_prompt=missing_ratio_prompt)
+
+    def should_handle_outliers(self, state):
+        return should_handle_outliers()
+
+    def handle_outliers(self, state):
+        return state
 
     def report_missing_ratios(self, state):
         tool_call = {
@@ -96,28 +163,21 @@ class Workflow:
         )
         return self.process_tool_task(state, tool_call=tool_call, message_prompt=missing_ratio_prompt)
 
-    def should_handle_missings(self, state):
-        if calculate_total_missing_values() > 0:
-            return "handle"
-        else:
-            return "skip"
-
-    def handle_missings(self, state):
-        tools = generate_tool_calls_for_missing_values()
-        tool_call_messages = []
+    def ask_to_model(self, state):
+        print("Agent Node")
         messages = state["messages"]
-
-        for tool_prompt in tools:
-            content = f"To handle missing values, use the following tool call:\n{tool_prompt}"
-            messages += [HumanMessage(content=content)]
-            messages += [self.model.llm.invoke(messages)]
-            tool_call_messages += messages[-1]
+        tool_calls = state["last_called_tool"]
+        response = self.model.llm.invoke(messages)
+        last_msg_type = MessageTypes.CHAT
+        if response.tool_calls:
+            last_msg_type = MessageTypes.TOOL_USE
+            tool_calls += [response]
 
         new_state = {
-            "messages": messages,
-            "last_message_type": MessageTypes.TOOL_USE,
+            "messages": [response],
+            "last_message_type": last_msg_type,
+            "last_called_tool": tool_calls,
         }
-        print(f"State:{state}")
         return new_state
 
     # __________________________ WORKFLOW __________________________
@@ -125,24 +185,45 @@ class Workflow:
         workflow = StateGraph(State)
 
         workflow.add_node("greet", self.generate_greeting)
-        workflow.add_node("summary", self.generate_dataset_summary)
-        workflow.add_node("report_missing", self.report_missing_ratios)
-        workflow.add_node("handle_missings", self.handle_missings)
+        workflow.add_node("dataset_summary", self.generate_dataset_summary)
+        workflow.add_node("start_preprocess", self.start_preprocess)
+        workflow.add_node("handle_missing", self.handle_missing)
+        workflow.add_node("handle_outliers", self.handle_outliers)
+        workflow.add_node("ask_to_model", self.ask_to_model)
 
         workflow.add_edge(START, "greet")
-        workflow.add_edge("greet", "summary")
-        workflow.add_edge("summary", "report_missing")
+        workflow.add_edge("greet", "dataset_summary")
+        workflow.add_edge("dataset_summary", "start_preprocess")
 
         workflow.add_conditional_edges(
-            "report_missing",
-            self.should_handle_missings,
+            "dataset_summary",
+            self.check_preprocess_needed,
             {
-                "handle": "handle_missings",
-                "skip": END,
+                "preprocess": "start_preprocess",
+                "skip": "ask_to_model",
             },
         )
 
-        workflow.add_edge("handle_missings", END)
+        workflow.add_conditional_edges(
+            "start_preprocess",
+            self.should_handle_missings,
+            {
+                "handle": "handle_missing",
+                "skip": "handle_outliers",
+            },
+        )
+
+        workflow.add_conditional_edges(
+            "handle_missing",
+            self.should_handle_outliers,
+            {
+                "handle": "handle_outliers",
+                "skip": "ask_to_model",
+            },
+        )
+
+        workflow.add_edge("handle_outliers", "ask_to_model")
+        workflow.add_edge("ask_to_model", "ask_to_model")
 
         return workflow
 

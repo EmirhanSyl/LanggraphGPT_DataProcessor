@@ -1,3 +1,4 @@
 __all__ = [
-    "tools"
+    "tools",
+    "missing_handler_tool",
 ]

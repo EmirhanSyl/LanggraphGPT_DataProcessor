@@ -7,7 +7,7 @@ from scipy.stats import shapiro, normaltest, stats
 import pandas as pd
 from langchain.tools import tool
 from langgraph.prebuilt import ToolExecutor, ToolNode
-from missing_handler_tool import MissingHandler
+from .missing_handler_tool import MissingHandler
 
 global dataset
 
@@ -150,6 +150,16 @@ def check_preprocess_needed():
     return "skip"
 
 
+def should_handle_outliers():
+    # Check for outliers in numeric columns
+    numeric_cols = dataset.select_dtypes(include=np.number).columns
+    for col in numeric_cols:
+        if is_outlier_present(dataset[col]):
+            return "handle"
+
+    return "skip"
+
+
 def is_outlier_present(series):
     """
     Checks if a numeric series contains any outliers using both Z-score and IQR methods.
@@ -191,9 +201,6 @@ def is_normal_distribution(series):
     series_clean = series.dropna()
     stat, p_value = stats.shapiro(series_clean)
     return p_value > 0.05  # Normally distributed if p > 0.05
-
-
-
 
 
 @tool

@@ -13,7 +13,9 @@ class App:
         self.wf = Workflow()
         self.workflow = self.wf.workflow_model
         self.memory = MemorySaver()
-        self.app_runnable = self.workflow.compile(checkpointer=self.memory, interrupt_before=["summary", "report_missing", "handle_missings"])
+        self.app_runnable = self.workflow.compile(checkpointer=self.memory,
+                                                  interrupt_before=["dataset_summary", "start_preprocess",
+                                                                    "handle_missing"])
         self.app_runnable.get_graph().draw_png("workflow_graph.png")
 
     # Helper function to stream output from the graph
