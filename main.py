@@ -33,7 +33,7 @@ async def on_chat_start():
     # Wait for the user to upload a file
     while files is None:
         files = await cl.AskFileMessage(
-            content=response.content, accept=["text/csv"], max_files=1
+            content=response.content, accept=["text/csv"], max_files=1, timeout=999999
         ).send()
 
     await cl.Message(content="Preparing dataset summary...").send()

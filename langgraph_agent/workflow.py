@@ -5,7 +5,8 @@ from langgraph.prebuilt import ToolExecutor, ToolInvocation, ToolNode
 from langchain_core.messages import ToolMessage, HumanMessage, AIMessage
 
 from .agent_state import State, MessageTypes
-from .tools.tools import ToolEditor, calculate_total_missing_values, generate_tool_calls_for_missing_values
+from .tools.tools import (ToolEditor, calculate_total_missing_values, generate_tool_calls_for_missing_values,
+                          get_dataset_sample)
 from .models.llama_model import ModelLLama
 
 import plotly.graph_objects as go
@@ -68,11 +69,19 @@ class Workflow:
             "args": {},
             "id": "tool_call_1"
         }
+        dataset_sample = get_dataset_sample()
         dataset_summary_prompt = (
-            "Write a result message about the user's dataset. The following dictionary is the summary of the dataset.\n"
-            "Give a dataset summary to the user and examine the results accordingly.\n"
+            f"Write a result message about the user's dataset. Here is the part of the dataset: \n'{dataset_sample}'\n "
+            f"The following dictionary is the summary of the dataset.\n"
+            f"Give a very detailed dataset summary to the user and examine the results accordingly.\n"
         )
         return self.process_tool_task(state,message_prompt=dataset_summary_prompt, tool_call=tool_call)
+
+    def should_handle_missings(self, state):
+        if calculate_total_missing_values() > 0:
+            return "handle"
+        else:
+            return "skip"
 
     def report_missing_ratios(self, state):
         tool_call = {
@@ -110,7 +119,6 @@ class Workflow:
         }
         print(f"State:{state}")
         return new_state
-
 
     # __________________________ WORKFLOW __________________________
     def setup_workflow(self):

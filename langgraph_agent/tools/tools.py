@@ -1,13 +1,13 @@
 from collections import defaultdict
 from statistics import mode, StatisticsError
-from scipy.stats import shapiro, normaltest
 
-import pandas
+import numpy as np
+from scipy.stats import shapiro, normaltest, stats
+
 import pandas as pd
 from langchain.tools import tool
-from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import ToolExecutor, ToolNode
-import matplotlib.pyplot as plt
+from missing_handler_tool import MissingHandler
 
 global dataset
 
@@ -26,6 +26,10 @@ class ToolEditor:
 def set_dataset(path):
     global dataset
     dataset = pd.read_csv(path)
+
+
+def get_dataset_sample():
+    return str(dataset.head().to_json(orient='records'))
 
 
 @tool
@@ -121,6 +125,77 @@ def summarize_dataset() -> dict:
     return dict(summary)
 
 
+def check_preprocess_needed():
+    """
+    Checks the dataset for outliers and missing values.
+    If outliers or missing values are found, return 'preprocess', otherwise return 'skip'.
+
+    Args:
+        dataset (pd.DataFrame): The dataset to be checked.
+
+    Returns:
+        str: 'preprocess' if missing values or outliers are found, 'skip' otherwise.
+    """
+
+    # Check for missing values
+    if dataset.isnull().sum().sum() > 0:
+        return "preprocess"
+
+    # Check for outliers in numeric columns
+    numeric_cols = dataset.select_dtypes(include=np.number).columns
+    for col in numeric_cols:
+        if is_outlier_present(dataset[col]):
+            return "preprocess"
+
+    return "skip"
+
+
+def is_outlier_present(series):
+    """
+    Checks if a numeric series contains any outliers using both Z-score and IQR methods.
+
+    Args:
+        series (pd.Series): The numeric column to be checked for outliers.
+
+    Returns:
+        bool: True if outliers are present, False otherwise.
+    """
+    if series.isnull().all():
+        return False  # Skip if the column is completely NaN
+
+    # Outlier detection using the Z-score (for normal distribution)
+    if is_normal_distribution(series):
+        z_scores = np.abs(stats.zscore(series.dropna()))
+        if np.any(z_scores > 3):  # Z-score > 3 indicates outliers
+            return True
+
+    # Outlier detection using IQR (for non-normal distribution)
+    Q1 = series.quantile(0.25)
+    Q3 = series.quantile(0.75)
+    IQR = Q3 - Q1
+    outliers = (series < (Q1 - 1.5 * IQR)) | (series > (Q3 + 1.5 * IQR))
+
+    return outliers.any()
+
+
+def is_normal_distribution(series):
+    """
+    Check if a numeric column follows a normal distribution using the Shapiro-Wilk test.
+
+    Args:
+        series (pd.Series): The numeric column to be checked.
+
+    Returns:
+        bool: True if the column is normally distributed, False otherwise.
+    """
+    series_clean = series.dropna()
+    stat, p_value = stats.shapiro(series_clean)
+    return p_value > 0.05  # Normally distributed if p > 0.05
+
+
+
+
+
 @tool
 def calculate_missing_values() -> dict:
     """
@@ -147,27 +222,66 @@ def calculate_missing_values() -> dict:
 
 
 @tool
-def handle_missing_values(column_name: str) -> str:
+def handle_missing_values() -> str:
     """
-    Replace missing values in the specified column with the column's mean value.
-    This function calculates the mean of the specified column, replaces any missing
-    values (NaNs) with this mean, and returns a summary string indicating the mean
-    value and the number of missing values that were replaced.
-    Parameters:
-    ----------
-    column_name : str
-        The name of the column in which missing values will be replaced with the mean value.
-    Returns:
-    -------
-    str
-        A string summarizing the operation, including the mean value used for replacement
-        and the number of missing values that were filled.
+    Handle missing values, outliers, and perform type conversions on the global 'dataset' DataFrame.
+
+    This function follows a detailed multistep process to manage missing values and outliers for different types
+    of columns (numeric, string, and datetime). It modifies the global 'dataset' DataFrame in place by applying
+    the following operations:
+
+    Steps:
+    1. **Type Conversion**:
+       - For all columns, if the column is of 'Object' dtype, it is checked whether it can be converted
+         to either 'String' or 'Datetime'. Conversion attempts:
+         - Convert to 'datetime' using `pd.to_datetime()`. If the conversion fails (ValueError or TypeError),
+           the column is converted to a 'String' type instead.
+
+    2. **Missing Value Ratio Check**:
+       - For each column in the DataFrame, the percentage of missing values is calculated.
+       - If a column has more than 35% missing values, it is dropped from the DataFrame completely.
+
+    3. **Handling Numeric Columns**:
+       - For each numeric column in the dataset:
+         - A normality test (Shapiro-Wilk) is conducted to determine if the column is normally distributed.
+         - If the column is normally distributed, outliers are detected using the Z-score method (values with Z > 3
+           are considered outliers).
+         - If the column is not normally distributed, the IQR (Interquartile Range) method is used for outlier detection.
+         - The ratio of outliers to total values is calculated:
+           - If the outlier ratio is greater than 10%, missing values in the column are filled with the **median**.
+           - Otherwise, missing values are filled with the **mean** of the column.
+
+    4. **Handling String Columns**:
+       - For each string column (dtype 'Object' or 'String'), missing values are filled with the constant value
+         "unknown".
+
+    5. **Handling Datetime Columns**:
+       - For each datetime column:
+         - Datetime values are converted to numeric timestamps for outlier detection.
+         - Based on the normality of the column, outliers are detected using either the Z-score or IQR method.
+         - The ratio of outliers to total values is calculated:
+           - If the outlier ratio is greater than 15%, missing values in the column are filled with the **median**
+             of the column.
+           - If the outlier ratio is less than 15%, the column is checked to see if it represents a time series:
+             - A time series is determined by checking if the data is sorted by time and has a regular frequency.
+             - If the column is a time series, missing values are filled using **forward fill** (ffill) or
+               **backward fill** (bfill).
+             - If it is not a time series, missing values are filled with the **mean** of the column.
+
+    Methods used:
+    - `convert_column_types()`: Converts 'Object' columns to 'String' or 'Datetime' where necessary.
+    - `check_and_remove_missing_columns()`: Removes columns with more than 35% missing values.
+    - `handle_numeric_columns()`: Handles missing values and outliers in numeric columns.
+    - `handle_string_columns()`: Fills missing values in string columns with 'unknown'.
+    - `handle_datetime_columns()`: Detects outliers, handles time series, and fills missing values for datetime columns.
+    - `is_normal_distribution()`: Tests if a column is normally distributed using the Shapiro-Wilk test.
+    - `z_score_outliers()`: Detects outliers using Z-scores for normally distributed columns.
+    - `iqr_outliers()`: Detects outliers using the IQR method for non-normal columns.
+    - `is_time_series()`: Determines if a datetime column is a time series based on sorting and frequency.
+
+    This method modifies the 'dataset' DataFrame directly.
     """
-    mean_value = dataset[column_name].mean()
-    missing_count = dataset[column_name].isna().sum()
-    dataset[column_name] = dataset[column_name].fillna(mean_value)
-    return (f"The mean value for '{column_name}' is {mean_value:.2f}. "
-            f"Replaced {missing_count} missing values with this mean.")
+    return MissingHandler(dataset).handle_missing_value()
 
 
 @tool
