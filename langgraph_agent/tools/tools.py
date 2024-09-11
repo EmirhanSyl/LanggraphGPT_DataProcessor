@@ -1,5 +1,6 @@
 from collections import defaultdict
 from statistics import mode, StatisticsError
+from scipy.stats import shapiro, normaltest
 
 import pandas
 import pandas as pd
@@ -7,6 +8,9 @@ from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import ToolExecutor, ToolNode
 import matplotlib.pyplot as plt
+
+global dataset
+
 
 class ToolEditor:
     def __init__(self) -> None:
@@ -19,10 +23,6 @@ class ToolEditor:
                 replace_with_mean, replace_with_mode, replace_with_median]
 
 
-df = pd.read_csv(r"C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\dataset\death_causes.csv")
-global dataset
-
-
 def set_dataset(path):
     global dataset
     dataset = pd.read_csv(path)
@@ -31,43 +31,92 @@ def set_dataset(path):
 @tool
 def summarize_dataset() -> dict:
     """
-        Summarizes a pandas DataFrame by calculating the data type, minimum, maximum, mean, median,
-        and mode for each column in the dataset.
+    Summarizes the global 'dataset' by calculating various statistics for each column.
 
-        Returns:
-        --------
-        dict
-            A dictionary where each key is a column name from the DataFrame and each value
-            is another dictionary containing the following keys:
-            - 'type': The data type of the column.
-            - 'min': The minimum value in the column.
-            - 'max': The maximum value in the column.
-            - 'mean': The mean value of the column (if numeric).
-            - 'median': The median value of the column (if numeric).
-            - 'mode': The mode of the column (if applicable; None if multimodal).
+    Returns:
+    --------
+    dict
+        A dictionary where each key is a column name from the DataFrame and each value
+        is another dictionary containing the following keys:
+        - 'type': The data type of the column.
+        - 'min': The minimum value in the column.
+        - 'max': The maximum value in the column.
+        - 'mean': The mean value of the column (if numeric).
+        - 'median': The median value of the column (if numeric).
+        - 'mode': The mode of the column (if applicable; None if multimodal).
+        - 'missing_count': The number of missing values in the column.
+        - 'missing_ratio': The ratio of missing values in the column.
+        - 'normality_test': The result of a normality test (Shapiro-Wilk).
+        - 'outlier_count': The number of outliers in the column (using IQR for numeric columns).
 
-        Notes:
-        ------
-        - The 'mean' and 'median' are calculated only for columns with numeric data types ('int64', 'float64').
-        - The 'mode' is calculated by dropping NaN values from the column. If the column is multimodal
-          or contains no valid values, the 'mode' will be set to None.
-        - This function is designed to handle columns with mixed data types, and it ensures that
-          the appropriate statistical measures are calculated based on the column's data type.
-        """
+    Notes:
+    ------
+    - The 'mean' and 'median' are calculated only for columns with numeric data types ('int64', 'float64').
+    - The 'mode' is calculated by dropping NaN values from the column. If the column is multimodal
+      or contains no valid values, the 'mode' will be set to None.
+    - The normality test is applied to numeric columns only.
+    - Outliers are detected using the IQR method for numeric columns.
+    """
     summary = defaultdict(dict)
 
     for column in dataset.columns:
         col_data = dataset[column]
+
+        # Data type
         summary[column]['type'] = str(col_data.dtype)
-        summary[column]['min'] = float(col_data.min()) if col_data.dtype in ['int64', 'float64'] else col_data.min()
-        summary[column]['max'] = float(col_data.max()) if col_data.dtype in ['int64', 'float64'] else col_data.max()
-        summary[column]['mean'] = float(col_data.mean()) if col_data.dtype in ['int64', 'float64'] else None
-        summary[column]['median'] = float(col_data.median()) if col_data.dtype in ['int64', 'float64'] else None
+
+        # Missing values
+        missing_count = int(col_data.isna().sum())
+        missing_ratio = missing_count / len(dataset)
+        summary[column]['missing_count'] = missing_count
+        summary[column]['missing_ratio'] = missing_ratio
+
+        summary[column]['min'] = col_data.min() if not pd.isna(col_data.min()) else None
+        summary[column]['max'] = col_data.max() if not pd.isna(col_data.max()) else None
 
         try:
             summary[column]['mode'] = mode(col_data.dropna())
         except StatisticsError:
             summary[column]['mode'] = None
+
+        if col_data.dtype in ['int64', 'float64']:
+            # Numeric statistics
+            summary[column]['mean'] = float(col_data.mean()) if not pd.isna(col_data.mean()) else None
+            summary[column]['median'] = float(col_data.median()) if not pd.isna(col_data.median()) else None
+
+            # To avoid Json serialization errors
+            summary[column]['min'] = float(summary[column]['min'])
+            summary[column]['max'] = float(summary[column]['max'])
+
+            # Normality test (using Shapiro-Wilk test)
+            try:
+                if len(col_data.dropna()) >= 3:
+                    stat, p_value = shapiro(col_data.dropna())
+                    summary[column]['normality_test'] = {
+                        "statistic": float(stat),
+                        "p_value": float(p_value),
+                        "is_normal": "True" if p_value > 0.05 else "False"
+                    }
+                else:
+                    summary[column]['normality_test'] = None
+            except ValueError:
+                summary[column]['normality_test'] = None
+
+            # Outlier detection using IQR method
+            Q1 = col_data.quantile(0.25)
+            Q3 = col_data.quantile(0.75)
+            IQR = Q3 - Q1
+            outliers = col_data[(col_data < (Q1 - 1.5 * IQR)) | (col_data > (Q3 + 1.5 * IQR))]
+            summary[column]['outlier_count'] = len(outliers)
+
+        else:
+            # For non-numeric columns, set None for numeric values
+            summary[column]['min'] = None
+            summary[column]['max'] = None
+            summary[column]['mean'] = None
+            summary[column]['median'] = None
+            summary[column]['normality_test'] = None
+            summary[column]['outlier_count'] = None
 
     return dict(summary)
 
@@ -114,9 +163,9 @@ def handle_missing_values(column_name: str) -> str:
         A string summarizing the operation, including the mean value used for replacement
         and the number of missing values that were filled.
     """
-    mean_value = df[column_name].mean()
-    missing_count = df[column_name].isna().sum()
-    df[column_name] = df[column_name].fillna(mean_value)
+    mean_value = dataset[column_name].mean()
+    missing_count = dataset[column_name].isna().sum()
+    dataset[column_name] = dataset[column_name].fillna(mean_value)
     return (f"The mean value for '{column_name}' is {mean_value:.2f}. "
             f"Replaced {missing_count} missing values with this mean.")
 

@@ -14,6 +14,20 @@ app = App()
 async def on_chat_start():
     cl.user_session.set("runnable", app.app_runnable)
     response = app.stream_app_catch_tool_calls({"messages": [HumanMessage(content="")]})
+
+    # Create the TaskList
+    task_list = cl.TaskList()
+    task_list.status = "Running..."
+
+    # Create a task and put it in the running state
+    task1 = cl.Task(title="Processing data", status=cl.TaskStatus.RUNNING)
+    await task_list.add_task(task1)
+    # Create another task that is in the ready state
+    task2 = cl.Task(title="Performing calculations")
+    await task_list.add_task(task2)
+    # Update the task list in the interface
+    await task_list.send()
+
     files = None
 
     # Wait for the user to upload a file
