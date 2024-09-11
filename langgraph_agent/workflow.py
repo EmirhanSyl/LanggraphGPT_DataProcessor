@@ -124,7 +124,7 @@ class Workflow:
              - If it is not a time series, missing values are filled with the **mean** of the column."""
         greeting_prompt = (
             f"Write an information message about how preprocessing steps will be done. Here I'm giving you to detailed "
-            f"explanation: {process_details}"
+            f"explanation:\n{process_details}"
         )
         return self.process_tool_task(state, message_prompt=greeting_prompt)
 
@@ -138,9 +138,8 @@ class Workflow:
             "id": "tool_call_3"
         }
         missing_ratio_prompt = (
-            "Write a result message about the user's dataset. The following dictionary contains the missing value "
-            "ratios.\n Examine the results for the user. If the missing value ratio of any column is greater than 5%, "
-            "warn the user that the data might be manipulated.\n"
+            "According to the following tool call result message, write an information message to the user about what "
+            "happened after missing values filled and how was the process."
         )
         return self.process_tool_task(state, tool_call=tool_call, message_prompt=missing_ratio_prompt)
 
@@ -149,19 +148,6 @@ class Workflow:
 
     def handle_outliers(self, state):
         return state
-
-    def report_missing_ratios(self, state):
-        tool_call = {
-            "name": "calculate_missing_values",
-            "args": {},
-            "id": "tool_call_2"
-        }
-        missing_ratio_prompt = (
-            "Write a result message about the user's dataset. The following dictionary contains the missing value ratios.\n"
-            "Examine the results for the user. If the missing value ratio of any column is greater than 5%, "
-            "warn the user that the data might be manipulated."
-        )
-        return self.process_tool_task(state, tool_call=tool_call, message_prompt=missing_ratio_prompt)
 
     def ask_to_model(self, state):
         print("Agent Node")
