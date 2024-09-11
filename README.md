@@ -2,7 +2,8 @@
 
 An adjusted LLM model that can do data processing jobs for you!
 ## Example Tool Usage
-![image](https://github.com/user-attachments/assets/1c800150-f442-4c7c-9397-cc1c4cdc2d6b)
+![image](https://github.com/user-attachments/assets/71848080-7aa1-404e-af78-596dca883577)
+
 
 
 ### Agent Graph Structure
