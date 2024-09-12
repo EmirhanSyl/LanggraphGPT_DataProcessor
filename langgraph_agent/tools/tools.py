@@ -8,6 +8,7 @@ import pandas as pd
 from langchain.tools import tool
 from langgraph.prebuilt import ToolExecutor, ToolNode
 from .missing_handler_tool import MissingHandler
+from .outlier_handler_tool import OutlierHandler
 
 global dataset
 
@@ -20,7 +21,7 @@ class ToolEditor:
 
     def get_tools(self) -> list:
         return [summarize_dataset, calculate_missing_values, handle_missing_values,
-                replace_with_mean, replace_with_mode, replace_with_median]
+                replace_with_mean, replace_with_mode, replace_with_median, handle_outliers]
 
 
 def set_dataset(path):
@@ -290,6 +291,50 @@ def handle_missing_values() -> str:
     """
     return MissingHandler(dataset).handle_missing_value()
 
+def handle_outliers() -> str:
+    """
+    Handle outliers in numeric columns of the dataset by applying appropriate transformations
+    or replacing outliers with statistical measures (mean, median).
+
+    This method performs the following steps:
+
+    1. **Outlier Detection**:
+       - Detects outliers in each numeric column of the dataset using either the Z-score method
+         (for normally distributed data) or the Interquartile Range (IQR) method (for non-normally distributed data).
+       - Outliers are values that fall outside of 1.5 times the IQR for skewed data or have a Z-score greater than 3
+         for normally distributed data.
+
+    2. **Outlier Handling**:
+       - For each numeric column, the method checks the distribution and the proportion of outliers
+         (outlier ratio) to decide how to handle them:
+         - **Normally Distributed Data**:
+           - If the column is normally distributed and the outlier ratio is low (< 10%), the method applies a
+             **log transformation** (if all values are positive) to reduce the effect of outliers.
+           - If the outlier ratio is high (≥ 10%) or log transformation is not applicable, outliers are replaced
+             with the **mean** of the column.
+         - **Non-Normally Distributed Data (Skewed)**:
+           - If the column is not normally distributed and the outlier ratio is low (< 10%), the method applies a
+             **square root transformation** (if all values are non-negative).
+           - If the outlier ratio is high (≥ 10%) or square root transformation is not suitable, outliers are replaced
+             with the **median** of the column.
+
+    3. **Return Log**:
+       - The method keeps a log of the actions taken for each numeric column, including whether a transformation was
+         applied or outliers were replaced.
+       - This log is returned as a dictionary, with the column names as keys and the action taken as the value.
+
+    Returns:
+        dict: A log of actions taken for each numeric column, indicating whether outliers were detected, transformed,
+        or replaced, and what method was used.
+
+    Example Log:
+    {
+        'A': 'Replaced outliers with mean',
+        'B': 'No outliers detected',
+        'C': 'Applied square root transformation'
+    }
+    """
+    return OutlierHandler(dataset).handle_outliers()
 
 @tool
 def replace_with_mean(column_name: str) -> str:

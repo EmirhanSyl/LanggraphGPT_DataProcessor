@@ -147,7 +147,16 @@ class Workflow:
         return should_handle_outliers()
 
     def handle_outliers(self, state):
-        return state
+        tool_call = {
+            "name": "handle_outliers",
+            "args": {},
+            "id": "tool_call_4"
+        }
+        missing_ratio_prompt = (
+            "According to the following tool call result message, write an information message to the user about what "
+            "happened after outliers handled and how was the process."
+        )
+        return self.process_tool_task(state, tool_call=tool_call, message_prompt=missing_ratio_prompt)
 
     def ask_to_model(self, state):
         print("Agent Node")
