@@ -47,11 +47,11 @@ class OutlierHandler:
                         log[col] = f"Applied square root transformation"
                     else:
                         # Replace outliers with median if negative values are present
-                        self.dataset[col].loc[outliers] = self.dataset[col].median()
+                        self.dataset.loc[outliers, col] = self.dataset[col].median()
                         log[col] = f"Replaced outliers with median"
                 else:
                     # Replace outliers with median if outlier ratio is high
-                    self.dataset[col].loc[outliers] = self.dataset[col].median()
+                    self.dataset.loc[outliers, col] = self.dataset[col].median()
                     log[col] = f"Replaced outliers with median due to high outlier ratio"
 
         return log

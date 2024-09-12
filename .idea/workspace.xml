@@ -5,11 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9842835c-7a46-4f54-9327-37ba2ff801da" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/langgraph_agent/tools/outlier_handler_tool.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/public/images/missing_handling_graph.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/langgraph_agent/tools/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/tools/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_preprocessing.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/data_preprocessing.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/langgraph_agent/tools/missing_handler_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/tools/missing_handler_tool.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/langgraph_agent/tools/outlier_handler_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/tools/outlier_handler_tool.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/langgraph_agent/workflow.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/workflow.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/workflow_graph.png" beforeDir="false" afterPath="$PROJECT_DIR$/workflow_graph.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,6 +54,7 @@
       <recent name="C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\public\avatars" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\public\images" />
       <recent name="C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\public" />
       <recent name="C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor" />
     </key>

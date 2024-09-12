@@ -158,6 +158,18 @@ class Workflow:
         )
         return self.process_tool_task(state, tool_call=tool_call, message_prompt=missing_ratio_prompt)
 
+    def end_of_preprocess(self, state):
+        tool_call = {
+            "name": "summarize_dataset",
+            "args": {},
+            "id": "tool_call_1"
+        }
+        missing_ratio_prompt = (
+            "According to result of the preprocessing steps evaluate the final state of the dataset. I'm giving you the"
+            " summary of the dataset again. Compare it with our older messages:\n"
+        )
+        return self.process_tool_task(state, message_prompt=missing_ratio_prompt, tool_call=tool_call)
+
     def ask_to_model(self, state):
         print("Agent Node")
         messages = state["messages"]
@@ -185,6 +197,7 @@ class Workflow:
         workflow.add_node("handle_missing", self.handle_missing)
         workflow.add_node("handle_outliers", self.handle_outliers)
         workflow.add_node("ask_to_model", self.ask_to_model)
+        workflow.add_node("end_of_preprocess", self.end_of_preprocess)
 
         workflow.add_edge(START, "greet")
         workflow.add_edge("greet", "dataset_summary")
@@ -213,11 +226,12 @@ class Workflow:
             self.should_handle_outliers,
             {
                 "handle": "handle_outliers",
-                "skip": "ask_to_model",
+                "skip": "end_of_preprocess",
             },
         )
 
-        workflow.add_edge("handle_outliers", "ask_to_model")
+        workflow.add_edge("handle_outliers", "end_of_preprocess")
+        workflow.add_edge("end_of_preprocess", "ask_to_model")
         workflow.add_edge("ask_to_model", "ask_to_model")
 
         return workflow

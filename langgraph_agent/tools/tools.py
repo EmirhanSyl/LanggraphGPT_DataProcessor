@@ -2,6 +2,7 @@ from collections import defaultdict
 from statistics import mode, StatisticsError
 
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy.stats import shapiro, normaltest, stats
 
 import pandas as pd
@@ -32,6 +33,29 @@ def set_dataset(path):
 def get_dataset_sample():
     return str(dataset.head().to_json(orient='records'))
 
+def pdf():
+    df = dataset
+
+    # Set up a matplotlib figure
+    fig, ax = plt.subplots(figsize=(48, 24))  # Adjust figure size based on your data
+
+    # Hide axes
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+    ax.set_frame_on(False)  # No frame for the table
+
+    # Create a table from the DataFrame
+    table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc='center', loc='center')
+
+    # Adjust the table style
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1.2, 1.2)
+
+    # Save the figure as a PDF
+    plt.savefig("output.pdf", bbox_inches="tight", dpi=300)
+
+    plt.close()
 
 @tool
 def summarize_dataset() -> dict:
@@ -200,7 +224,7 @@ def is_normal_distribution(series):
         bool: True if the column is normally distributed, False otherwise.
     """
     series_clean = series.dropna()
-    stat, p_value = stats.shapiro(series_clean)
+    stat, p_value = shapiro(series_clean)
     return p_value > 0.05  # Normally distributed if p > 0.05
 
 
@@ -291,6 +315,8 @@ def handle_missing_values() -> str:
     """
     return MissingHandler(dataset).handle_missing_value()
 
+
+@tool
 def handle_outliers() -> str:
     """
     Handle outliers in numeric columns of the dataset by applying appropriate transformations
@@ -335,6 +361,7 @@ def handle_outliers() -> str:
     }
     """
     return OutlierHandler(dataset).handle_outliers()
+
 
 @tool
 def replace_with_mean(column_name: str) -> str:

@@ -45,7 +45,7 @@ class MissingHandler:
         for col in self.dataset.columns:
             if self.dataset[col].dtype == 'O':  # Object type
                 try:
-                    self.dataset[col] = pd.to_datetime(self.dataset[col])
+                    self.dataset[col] = pd.to_datetime(self.dataset[col], errors='coerce')
                     log[col] = f"Converted column '{col}' from Object to Datetime"
                 except (ValueError, TypeError):
                     self.dataset[col] = self.dataset[col].astype(str)
@@ -64,7 +64,7 @@ class MissingHandler:
         for col in columns_to_drop:
             log[col] = f"Removed column '{col}' due to missing ratio {missing_ratio[col]:.2%}"
 
-        self.dataset.drop(columns=columns_to_drop, inplace=True)
+        self.dataset = self.dataset.drop(columns=columns_to_drop)
         return log
 
     def _handle_numeric_columns(self):
@@ -92,10 +92,10 @@ class MissingHandler:
 
                 # Handling missing values based on outlier ratio
                 if outlier_ratio > 0.10:
-                    self.dataset[col].fillna(self.dataset[col].median(), inplace=True)
+                    self.dataset[col] = self.dataset[col].fillna(self.dataset[col].median())
                     log[col] = f"Filled missing values in '{col}' with median (Outlier ratio {outlier_ratio:.2%})"
                 else:
-                    self.dataset[col].fillna(self.dataset[col].mean(), inplace=True)
+                    self.dataset[col] = self.dataset[col].fillna(self.dataset[col].mean())
                     log[col] = f"Filled missing values in '{col}' with mean (Outlier ratio {outlier_ratio:.2%})"
 
         return log
@@ -109,7 +109,7 @@ class MissingHandler:
         string_cols = self.dataset.select_dtypes(include='object').columns
         for col in string_cols:
             if self.dataset[col].isnull().mean() > 0:
-                self.dataset[col].fillna('unknown', inplace=True)
+                self.dataset[col] = self.dataset[col].fillna('unknown')
                 log[col] = f"Filled missing values in '{col}' with 'unknown'"
         return log
 
@@ -136,16 +136,16 @@ class MissingHandler:
                 outlier_ratio = outlier_mask.sum() / len(numeric_col)
 
                 if self._is_time_series(col):
-                    self.dataset[col].fillna(method='ffill', inplace=True)
-                    self.dataset[col].fillna(method='bfill', inplace=True)
+                    self.dataset[col] = self.dataset[col].fillna(method='ffill')
+                    self.dataset[col] = self.dataset[col].fillna(method='bfill')
                     log[col] = f"Filled missing values in '{col}' using forward/backward fill (Time Series)"
                 else:
                     if outlier_ratio > 0.15:
-                        self.dataset[col].fillna(self.dataset[col].median(), inplace=True)
+                        self.dataset[col] = self.dataset[col].fillna(self.dataset[col].median())
                         log[
                             col] = f"Filled missing values in '{col}' with median (Outlier ratio {outlier_ratio:.2%}, method: {outlier_method})"
                     else:
-                        self.dataset[col].fillna(self.dataset[col].mean(), inplace=True)
+                        self.dataset[col] = self.dataset[col].fillna(self.dataset[col].mean())
                         log[
                             col] = f"Filled missing values in '{col}' with mean (Outlier ratio {outlier_ratio:.2%}, method: {outlier_method})"
 
