@@ -187,6 +187,70 @@ class Workflow:
         }
         return new_state
 
+    def is_any_tool_called(self, state):
+        message_type = state["last_message_type"]
+        if not message_type == MessageTypes.TOOL_USE:
+            return "end"
+        else:
+            return "tool_call"
+
+    # Define the function that generates a verification message using the LLM
+    def generate_dynamic_verification(self, state):
+        messages = state["messages"]
+        last_message = messages[-1]
+
+        # Extract tool call information
+        tool_call_info = json.dumps(last_message.tool_calls, indent=2)
+        prompt = (f"Can you generate a verification message for informing the user about planning to use the "
+                  f"following tool?\n\n{tool_call_info}")
+
+        messages += [HumanMessage(content=prompt)]
+
+        # Call the LLM to generate a dynamic verification message
+        response = self.model.llm.invoke(messages)
+
+        new_state = {
+            "messages": [response],
+            "last_message_type": MessageTypes.VERIFICATION,
+        }
+        return new_state
+
+    def call_tool(self, state):
+        print("Action Node")
+        tool_call_messages = state["last_called_tool"]
+
+        # We construct a ToolInvocation from the function_call
+        tool_call = tool_call_messages[-1].tool_calls[0]
+
+        action = ToolInvocation(
+            tool=tool_call["name"],
+            tool_input=tool_call["args"],
+        )
+
+        response = self.tool_executor.invoke(action)
+
+        tool_message = ToolMessage(
+            content=str(response), name=action.tool, tool_call_id=tool_call["id"]
+        )
+
+        # We return a list, because this will get added to the existing list
+        return {"messages": [tool_message]}
+
+    def generate_tool_result_message(self, state):
+        messages = state["messages"]
+        last_message = messages[-1]
+        if isinstance(last_message, ToolMessage):
+            prompt = (f"Can you generate a verification message for informing the user about used tool results. "
+                      f"Here is the result of the function call: \n\n{last_message}")
+            messages += [HumanMessage(content=prompt)]
+            response = self.model.llm.invoke(messages)
+
+            new_state = {
+                "messages": [response],
+                "last_message_type": MessageTypes.CHAT,
+            }
+            return new_state
+
     # __________________________ WORKFLOW __________________________
     def setup_workflow(self):
         workflow = StateGraph(State)
@@ -196,8 +260,11 @@ class Workflow:
         workflow.add_node("start_preprocess", self.start_preprocess)
         workflow.add_node("handle_missing", self.handle_missing)
         workflow.add_node("handle_outliers", self.handle_outliers)
-        workflow.add_node("ask_to_model", self.ask_to_model)
         workflow.add_node("end_of_preprocess", self.end_of_preprocess)
+        workflow.add_node("ask_to_model", self.ask_to_model)
+        workflow.add_node("generate_verification", self.generate_dynamic_verification)
+        workflow.add_node("action", self.call_tool)
+        workflow.add_node("action_result", self.generate_tool_result_message)
 
         workflow.add_edge(START, "greet")
         workflow.add_edge("greet", "dataset_summary")
@@ -232,7 +299,20 @@ class Workflow:
 
         workflow.add_edge("handle_outliers", "end_of_preprocess")
         workflow.add_edge("end_of_preprocess", "ask_to_model")
-        workflow.add_edge("ask_to_model", "ask_to_model")
+
+        workflow.add_conditional_edges(
+            "ask_to_model",
+            self.is_any_tool_called,
+            # The keys are strings, and the values are other nodes.
+            {
+                "tool_call": "generate_verification",
+                "end": "ask_to_model",
+            },
+        )
+
+        workflow.add_edge("generate_verification", "action")
+        workflow.add_edge("action", "action_result")
+        workflow.add_edge("action_result", "ask_to_model")
 
         return workflow
 
