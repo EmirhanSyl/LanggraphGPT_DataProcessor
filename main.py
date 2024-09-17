@@ -8,8 +8,10 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph_agent.agent_state import MessageTypes
 from app import App
 from langgraph_agent.tools.tools import set_dataset
+from langgraph_agent.translator import Translator
 
 app = App()
+translator = Translator()
 global task_list
 task_part_list = []
 current_task = 0
@@ -53,7 +55,8 @@ async def add_task(title, statues):
 
 
 async def inform_about_preprocessing():
-    response = app.stream_app_catch_tool_calls()
+    response = app.stream_app()
+    response = await translator.translate(response.content)
 
     image = cl.Image(path="./public/images/missing_handling_graph.jpg", name="handle_missing", display="inline", size="large")
     await cl.Message(
@@ -61,9 +64,10 @@ async def inform_about_preprocessing():
         elements=[image],
     ).send()
 
-    await update_task_status(task_part_list[1], cl.TaskStatus.READY)
+ 
+    await update_task_status(task_part_list[1], cl.TaskStatus.READY)  # Magic Number! Change it
     res = await cl.AskActionMessage(
-        content=response.content,
+        content=response,
         actions=[
             cl.Action(name="continue", value="continue", label="✅ Continue"),
             cl.Action(name="cancel", value="cancel", label="❌ Cancel"),
@@ -93,7 +97,7 @@ async def inform_about_preprocessing():
 
 
 async def preprocess_results():
-    response = app.stream_app_catch_tool_calls()  # Run Handle Missing
+    response = app.stream_app()  # Run Handle Missing
 
     snapshot = app.app_runnable.get_state(app.thread)
 
@@ -106,7 +110,7 @@ async def preprocess_results():
     await update_task_status(task_part_list[2], cl.TaskStatus.DONE)
     await update_task_status(task_part_list[3], cl.TaskStatus.RUNNING)
 
-    response = app.stream_app_catch_tool_calls()  # Run Handle Outlier
+    response = app.stream_app()  # Run Handle Outlier
     snapshot = app.app_runnable.get_state(app.thread)
 
     tool_message = snapshot.values["messages"][-3]  # Tool Message Index
@@ -117,7 +121,7 @@ async def preprocess_results():
     await update_task_status(task_part_list[3], cl.TaskStatus.DONE)
     await update_task_status(task_part_list[4], cl.TaskStatus.RUNNING)
 
-    response = app.stream_app_catch_tool_calls()  # Run End Of Preprocess
+    response = app.stream_app()  # Run End Of Preprocess
     await update_task_status(task_part_list[4], cl.TaskStatus.DONE)
     await update_task_status(task_part_list[1], cl.TaskStatus.DONE)
     await cl.Message(content=response.content).send()
@@ -135,7 +139,7 @@ async def preprocess_results():
 @cl.on_chat_start
 async def on_chat_start():
     cl.user_session.set("runnable", app.app_runnable)
-    response = app.stream_app_catch_tool_calls({"messages": [HumanMessage(content="")]})
+    response = app.stream_app({"messages": [HumanMessage(content="")]})
 
     files = None
 
@@ -149,7 +153,7 @@ async def on_chat_start():
 
     dataset = files[0]
     set_dataset(dataset.path)
-    app.stream_app_catch_tool_calls()
+    app.stream_app()
 
     snapshot = app.app_runnable.get_state(app.thread)
     print(snapshot.values)
@@ -175,7 +179,7 @@ async def on_message(message: cl.Message):
 
     app.app_runnable.update_state(config=app.thread, values=snapshot.values, as_node="ask_to_model")
 
-    response = app.stream_app_catch_tool_calls()
+    response = app.stream_app()
 
     message_type = snapshot.values["last_message_type"]
     if message_type == MessageTypes.CHAT:

@@ -8,6 +8,8 @@ from scipy.stats import shapiro, normaltest, stats
 import pandas as pd
 from langchain.tools import tool
 from langgraph.prebuilt import ToolExecutor, ToolNode
+
+from . import hypothesis_tests_tool
 from .missing_handler_tool import MissingHandler
 from .outlier_handler_tool import OutlierHandler
 
@@ -21,8 +23,11 @@ class ToolEditor:
         self.tool_node = ToolNode(self.tools)
 
     def get_tools(self) -> list:
-        return [summarize_dataset, calculate_missing_values, handle_missing_values,
-                replace_with_mean, replace_with_mode, replace_with_median, handle_outliers]
+        functions = [summarize_dataset, calculate_missing_values, handle_missing_values, replace_with_mean,
+                     replace_with_mode, replace_with_median, handle_outliers]
+
+        functions += hypothesis_tests_tool.hypothesis_test_functions
+        return functions
 
 
 def set_dataset(path):

@@ -13,4 +13,5 @@ class State(TypedDict):
     messages: Annotated[list, add_messages]
     last_message_type: MessageTypes
     last_called_tool: list[dict]
+    translated_messages: Annotated[list, add_messages]
 

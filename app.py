@@ -1,6 +1,6 @@
 from typing import Optional, Tuple, Any
 
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage
 from langgraph_agent.workflow import Workflow
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -19,9 +19,8 @@ class App:
         self.app_runnable.get_graph().draw_png("workflow_graph.png")
 
     # Helper function to stream output from the graph
-    def stream_app_catch_tool_calls(self, inputs=None) -> Optional[AIMessage]:
+    def stream_app(self, inputs=None) -> Optional[AIMessage]:
         """Stream app, catching tool calls."""
-        model_input = {"messages": [inputs]}
         response_message = None
         for event in self.app_runnable.stream(inputs, self.thread, stream_mode="values"):
             message = event["messages"][-1]
