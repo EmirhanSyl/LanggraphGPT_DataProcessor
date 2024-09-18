@@ -1,19 +1,16 @@
 import json
-import uuid
 import asyncio
 from langgraph_agent.tools.tools import pdf
 
 import chainlit as cl
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
 from langgraph_agent.agent_state import MessageTypes
 from app import App
 from langgraph_agent.tools.tools import set_dataset
-from langgraph_agent.translator import Translator
 
 app = App()
-translator = Translator()
 global task_list
-task_part_list = []
+task_part_list = []     # So, I have a hypothesis that claims the number of deaths increases over the years. Can you prove it whit using necessary tests?
 current_task = 0
 
 
@@ -56,7 +53,6 @@ async def add_task(title, statues):
 
 async def inform_about_preprocessing():
     response = app.stream_app()
-    response = await translator.translate(response.content)
 
     image = cl.Image(path="./public/images/missing_handling_graph.jpg", name="handle_missing", display="inline", size="large")
     await cl.Message(
@@ -67,7 +63,7 @@ async def inform_about_preprocessing():
  
     await update_task_status(task_part_list[1], cl.TaskStatus.READY)  # Magic Number! Change it
     res = await cl.AskActionMessage(
-        content=response,
+        content=response.content,
         actions=[
             cl.Action(name="continue", value="continue", label="✅ Continue"),
             cl.Action(name="cancel", value="cancel", label="❌ Cancel"),
@@ -122,7 +118,9 @@ async def preprocess_results():
     await update_task_status(task_part_list[4], cl.TaskStatus.RUNNING)
 
     response = app.stream_app()  # Run End Of Preprocess
+
     await update_task_status(task_part_list[4], cl.TaskStatus.DONE)
+    task_list.status = "Tamamlandı"
     await update_task_status(task_part_list[1], cl.TaskStatus.DONE)
     await cl.Message(content=response.content).send()
 
