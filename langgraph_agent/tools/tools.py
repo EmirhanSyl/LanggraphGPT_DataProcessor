@@ -10,6 +10,7 @@ from langchain.tools import tool
 from langgraph.prebuilt import ToolExecutor, ToolNode
 
 from . import hypothesis_tests_tool
+from .test import parametric, regression, correlation, nonparametric
 from .missing_handler_tool import MissingHandler
 from .outlier_handler_tool import OutlierHandler
 
@@ -26,7 +27,11 @@ class ToolEditor:
         functions = [summarize_dataset, calculate_missing_values, handle_missing_values, replace_with_mean,
                      replace_with_mode, replace_with_median, handle_outliers]
 
-        functions += hypothesis_tests_tool.hypothesis_test_functions
+        # functions += hypothesis_tests_tool.hypothesis_test_functions
+        functions += regression.regression_tests
+        functions += correlation.correlation_tests
+        functions += nonparametric.nonparametric_tests
+        functions += parametric.parametric_tests
         return functions
 
 

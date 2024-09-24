@@ -10,7 +10,7 @@ from langgraph_agent.tools.tools import set_dataset
 
 app = App()
 global task_list
-task_part_list = []     # So, I have a hypothesis that claims the number of deaths increases over the years. Can you prove it whit using necessary tests?
+task_part_list = []
 current_task = 0
 
 

@@ -15,6 +15,7 @@ class Workflow:
         self.tool_editor = ToolEditor()
         self.tool_executor = self.tool_editor.tool_executor
         self.model = ModelLLama(self.tool_editor.tools)
+        self.tool_node = ToolNode(self.tool_editor.get_tools())
         self.workflow_model = self.setup_workflow()
 
     def process_tool_task(self, state, message_prompt: str, tool_call: dict = None) -> dict:
@@ -171,7 +172,6 @@ class Workflow:
         return self.process_tool_task(state, message_prompt=missing_ratio_prompt, tool_call=tool_call)
 
     def ask_to_model(self, state):
-        print("Agent Node")
         messages = state["messages"]
         tool_calls = state["last_called_tool"]
         response = self.model.llm.invoke(messages)
@@ -193,6 +193,9 @@ class Workflow:
             return "end"
         else:
             return "tool_call"
+
+    def is_hypothesis_test(self, state):
+        ...
 
     # Define the function that generates a verification message using the LLM
     def generate_dynamic_verification(self, state):
@@ -263,7 +266,8 @@ class Workflow:
         workflow.add_node("end_of_preprocess", self.end_of_preprocess)
         workflow.add_node("ask_to_model", self.ask_to_model)
         workflow.add_node("generate_verification", self.generate_dynamic_verification)
-        workflow.add_node("action", self.call_tool)
+        # workflow.add_node("action", self.call_tool)
+        workflow.add_node("action", self.tool_node)
         workflow.add_node("action_result", self.generate_tool_result_message)
 
         workflow.add_edge(START, "greet")
