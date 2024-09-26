@@ -20,6 +20,9 @@ global dataset
 class ToolEditor:
     def __init__(self) -> None:
         self.tools = self.get_tools()
+        self.hypothesis_tools = self.get_hypothesis_tools()
+        self.hypothesis_tools = self.get_hypothesis_tools()
+        self.dataset_summarizer_tools = self.get_dataset_summarizer_tools()
         self.tool_executor = ToolExecutor(self.tools)
         self.tool_node = ToolNode(self.tools)
 
@@ -33,6 +36,17 @@ class ToolEditor:
         functions += nonparametric.nonparametric_tests
         functions += parametric.parametric_tests
         return functions
+
+    def get_hypothesis_tools(self) -> list:
+        functions = []
+        functions += regression.regression_tests
+        functions += correlation.correlation_tests
+        functions += nonparametric.nonparametric_tests
+        functions += parametric.parametric_tests
+        return functions
+
+    def get_dataset_summarizer_tools(self) -> list:
+        return [summarize_dataset, calculate_missing_values, is_normal_distribution]
 
 
 def set_dataset(path):
@@ -222,18 +236,18 @@ def is_outlier_present(series):
 
     return outliers.any()
 
-
-def is_normal_distribution(series):
+@tool
+def is_normal_distribution(column):
     """
     Check if a numeric column follows a normal distribution using the Shapiro-Wilk test.
 
     Args:
-        series (pd.Series): The numeric column to be checked.
+        column (str): The column name to be checked.
 
     Returns:
         bool: True if the column is normally distributed, False otherwise.
     """
-    series_clean = series.dropna()
+    series_clean = dataset[column].dropna()
     stat, p_value = shapiro(series_clean)
     return p_value > 0.05  # Normally distributed if p > 0.05
 

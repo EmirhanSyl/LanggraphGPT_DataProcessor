@@ -5,18 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9842835c-7a46-4f54-9327-37ba2ff801da" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/langgraph_agent/tools/test/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/langgraph_agent/tools/test/correlation.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/langgraph_agent/tools/test/nonparametric.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/langgraph_agent/tools/test/parametric.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/langgraph_agent/tools/test/regression.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/multiagent_graph/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/multiagent_graph/workflow.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/langgraph_agent/models/llama_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/models/llama_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/tools/tools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/langgraph_agent/workflow.py" beforeDir="false" afterPath="$PROJECT_DIR$/langgraph_agent/workflow.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/output.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/output.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/video.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +38,7 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.workflow.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
@@ -60,6 +55,35 @@
       <recent name="C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor\public" />
       <recent name="C:\Users\emirs\Documents\Projects\python\LanggraphGPT_DataProcessor" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="workflow" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="LanggraphGPT_DataProcessor" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/multiagent_graph" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/multiagent_graph/workflow.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.workflow" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
