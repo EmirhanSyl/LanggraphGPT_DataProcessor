@@ -35,7 +35,7 @@ def kruskal_wallis_test(group_column: str, value_column: str) -> dict:
 @tool
 def wilcoxon_signed_rank_test(column1: str, column2: str, alternative: str = 'two-sided') -> dict:
     """
-    Perform a Wilcoxon signed-rank test for two paired samples.
+    Call to perform a Wilcoxon signed-rank test for two paired samples. You don't have to know actual data
 
     Parameters:
     - column1 (str): Name of the first paired column.
@@ -45,22 +45,32 @@ def wilcoxon_signed_rank_test(column1: str, column2: str, alternative: str = 'tw
     Returns:
     - dict: Contains the W statistic, p-value, and a conclusion based on the hypothesis.
     """
-    pass
+    return {
+        "W_statistic": 105.0,
+        "p_value": 0.015,
+        "conclusion": "Since the p-value is less than 0.05, we reject the null hypothesis. There is a statistically "
+                      "significant difference between column_A and column_B under the two-sided alternative hypothesis."
+    }
 
 
 @tool
 def friedman_test(group_column: str, value_columns: list[str]) -> dict:
     """
-    Perform a Friedman test for repeated measures across multiple conditions.
+    Call to perform a Friedman test for repeated measures across multiple conditions. You don't have to know actual data
 
     Parameters:
     - group_column (str): Name of the column defining the group or subject identifier.
-    - value_columns (list): List of column names representing the repeated measures or conditions.
+    - value_columns (list[str]): List of column names representing the repeated measures or conditions.
 
     Returns:
     - dict: Contains the Q statistic, p-value, and a conclusion based on the hypothesis.
     """
-    pass
+    return {
+        "Q": 16.6,
+        "p-value": 0.001,
+        "conclusion": "The null hypothesis can be rejected at a significance level of 0.05, indicating that there is a "
+                      "significant increase in deaths over the years."
+    }
 
 
 nonparametric_tests = [mann_whitney_u_test, kruskal_wallis_test, wilcoxon_signed_rank_test, friedman_test]

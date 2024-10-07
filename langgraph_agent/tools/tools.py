@@ -48,6 +48,9 @@ class ToolEditor:
     def get_dataset_summarizer_tools(self) -> list:
         return [summarize_dataset, calculate_missing_values, is_normal_distribution]
 
+    def get_test_tools(self):
+        return [nonparametric.wilcoxon_signed_rank_test, nonparametric.friedman_test]
+
 
 def set_dataset(path):
     global dataset

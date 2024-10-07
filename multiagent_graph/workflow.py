@@ -55,7 +55,7 @@ def empty_node(state):
     ...
 
 
-def supervisor_agent(state):
+def supervisor_agent():
     system_prompt = (
         f"You are a supervisor tasked with managing a conversation between the"
         f" following workers:  {members}. Given the following user request,"
@@ -63,8 +63,8 @@ def supervisor_agent(state):
         f" task and respond with their results and status. When finished,"
         f" respond with FINISH."
     )
-    messages = state["messages"]
-    system_question = f"Given the conversation above, who should act next?"\
+    # messages = state["messages"]
+    system_question = f"Given the conversation above, who should act next?" \
                       f" Or should we FINISH? Select one of: {options}"
 
     # prompt ={"messages": [SystemMessage(content=system_prompt)] + messages + [SystemMessage(content=system_question)]}
@@ -89,9 +89,8 @@ dataset_summarizer_node = functools.partial(agent_node, agent=dataset_summarizer
 workflow = StateGraph(AgentState)
 workflow.add_node("Hypothesis_Tester", hypothesis_node)
 workflow.add_node("Dataset_Summarizer", dataset_summarizer_node)
-workflow.add_node("supervisor", supervisor_agent)
+workflow.add_node("supervisor", supervisor_agent())
 workflow.add_node("START", empty_node)
-
 
 for member in members:
     workflow.add_edge(member, "supervisor")
@@ -100,10 +99,20 @@ conditional_map = {k: k for k in members}
 conditional_map["FINISH"] = END
 conditional_map["START"] = "START"
 workflow.add_conditional_edges("supervisor", lambda x: x["next"], conditional_map)
+# workflow.add_conditional_edges(
+#             "supervisor",
+#             select_agent,
+#             {
+#                 "Hypothesis_Tester": "Hypothesis_Tester",
+#                 "Dataset_Summarizer": "Dataset_Summarizer",
+#                 "FINISH": END,
+#             },
+#         )
 workflow.add_edge(START, "START")
 workflow.add_edge("START", "supervisor")
 
 graph = workflow.compile()
+graph.get_graph().draw_png("multi-agent_workflow.png")
 init_state = {"messages": [HumanMessage(content="I have a hypothesis that claims the number of deaths increases over "
                                                 "the years. Can you prove it whit using necessary tests?")],
               "next": "START"
