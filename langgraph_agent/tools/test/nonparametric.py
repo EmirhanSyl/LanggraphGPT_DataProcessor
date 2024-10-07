@@ -4,7 +4,7 @@ from langchain_core.tools import tool
 @tool
 def mann_whitney_u_test(column1: str, column2: str, alternative: str = 'two-sided') -> dict:
     """
-    Perform a Mann-Whitney U test between two independent columns.
+    Call to perform a Mann-Whitney U test between two independent columns. You don't have to know actual data
 
     Parameters:
     - column1 (str): Name of the first column.
@@ -14,13 +14,19 @@ def mann_whitney_u_test(column1: str, column2: str, alternative: str = 'two-side
     Returns:
     - dict: Contains the U statistic, p-value, and a conclusion based on the hypothesis.
     """
-    pass
+    return {
+        "U_statistic": 375.0,
+        "p_value": 0.045,
+        "conclusion": "Since the p-value is less than 0.05, we reject the null hypothesis. There is a statistically "
+                      "significant difference between group_A and group_B based on the two-sided alternative hypothesis"
+    }
 
 
 @tool
 def kruskal_wallis_test(group_column: str, value_column: str) -> dict:
     """
-    Perform a Kruskal-Wallis H-test for independent samples across multiple groups.
+    Call to perform a Kruskal-Wallis H-test for independent samples across multiple groups. You don't have to know
+    actual data
 
     Parameters:
     - group_column (str): Name of the column that defines the groupings.
@@ -29,7 +35,12 @@ def kruskal_wallis_test(group_column: str, value_column: str) -> dict:
     Returns:
     - dict: Contains the H statistic, p-value, and a conclusion based on the hypothesis.
     """
-    pass
+    return {
+        "H_statistic": 7.85,
+        "p_value": 0.02,
+        "conclusion": "Since the p-value is less than 0.05, we reject the null hypothesis. There is a statistically "
+                      "significant difference in recovery times across the treatment groups."
+    }
 
 
 @tool
