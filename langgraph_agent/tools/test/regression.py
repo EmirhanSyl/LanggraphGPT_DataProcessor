@@ -7,14 +7,7 @@ import scipy.stats as stats
 def basic_linear_regression(independent_column: str, dependent_column: str) -> dict:
     """
     Call to perform a basic linear regression to model the relationship between an independent variable and a dependent
-    variable. You don't have to know actual data
-
-    Parameters:
-    - independent_column (str): Name of the independent variable (predictor).
-    - dependent_column (str): Name of the dependent variable (outcome).
-
-    Returns:
-    - dict: Contains regression coefficients, p-values, R-squared value, and a conclusion based on the model fit.
+    variable. Only use column names from dataset summary to fill function parameters
     """
 
     return {
@@ -36,15 +29,7 @@ def basic_linear_regression(independent_column: str, dependent_column: str) -> d
 def multiple_linear_regression(independent_columns: list, dependent_column: str) -> dict:
     """
     Call to perform a multiple linear regression to model the relationship between several independent variables and a
-    dependent variable. You don't have to know actual data
-
-    Parameters:
-    - independent_columns (list): List of independent variable names (predictors).
-    - dependent_column (str): Name of the dependent variable (outcome).
-
-    Returns:
-    - dict: Contains regression p-values, R-squared value, adjusted R-squared value, and a conclusion
-    based on the model fit.
+    dependent variable. Only use column names from dataset summary to fill function parameters
     """
     return {
         "p_values": {
@@ -66,13 +51,7 @@ def multiple_linear_regression(independent_columns: list, dependent_column: str)
 def hierarchical_regression(blocks: list, dependent_column: str) -> dict:
     """
     Perform a hierarchical regression where independent variables are entered in blocks to assess the incremental value of each block.
-
-    Parameters:
-    - blocks (list): A list of lists, where each inner list represents a block of independent variables to be entered into the regression model in steps.
-    - dependent_column (str): Name of the dependent variable (outcome).
-
-    Returns:
-    - dict: Contains regression coefficients for each step, p-values, R-squared values for each step, change in R-squared, and a conclusion on the added value of each block.
+    Only use column names from dataset summary to fill function parameters
     """
     return {
         "step_1": {
@@ -111,13 +90,7 @@ def hierarchical_regression(blocks: list, dependent_column: str) -> dict:
 def logistic_regression(independent_columns: list, dependent_column: str) -> dict:
     """
     Perform a logistic regression to model the probability of a binary outcome based on one or more independent variables.
-
-    Parameters:
-    - independent_columns (list): List of independent variable names (predictors).
-    - dependent_column (str): Name of the dependent variable (binary outcome).
-
-    Returns:
-    - dict: Contains regression coefficients (log-odds), p-values, model accuracy, odds ratios, and a conclusion on model fit and predictions.
+    Only use column names from dataset summary to fill function parameters
     """
     return {
         "coefficients": {

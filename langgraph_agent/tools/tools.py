@@ -21,10 +21,14 @@ class ToolEditor:
     def __init__(self) -> None:
         self.tools = self.get_tools()
         self.hypothesis_tools = self.get_hypothesis_tools()
-        self.hypothesis_tools = self.get_hypothesis_tools()
         self.dataset_summarizer_tools = self.get_dataset_summarizer_tools()
         self.tool_executor = ToolExecutor(self.tools)
         self.tool_node = ToolNode(self.tools)
+
+        self.regression_tests = regression.regression_tests
+        self.correlation_tests = correlation.correlation_tests
+        self.nonparametric_tests = nonparametric.nonparametric_tests
+        self.parametric_tests = parametric.parametric_tests
 
     def get_tools(self) -> list:
         functions = [summarize_dataset, calculate_missing_values, handle_missing_values, replace_with_mean,
@@ -48,8 +52,17 @@ class ToolEditor:
     def get_dataset_summarizer_tools(self) -> list:
         return [summarize_dataset, calculate_missing_values, is_normal_distribution]
 
-    def get_test_tools(self):
-        return nonparametric.nonparametric_tests + regression.regression_tests + correlation.correlation_tests
+    def get_regression_tools(self):
+        return regression.regression_tests
+
+    def get_correlation_tools(self):
+        return correlation.correlation_tests
+
+    def get_parametric_tools(self):
+        return parametric.parametric_tests
+
+    def get_nonparametric_tools(self):
+        return nonparametric.nonparametric_tests
 
 
 def set_dataset(path):

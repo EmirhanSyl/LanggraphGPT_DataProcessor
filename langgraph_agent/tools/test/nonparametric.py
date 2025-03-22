@@ -4,15 +4,9 @@ from langchain_core.tools import tool
 @tool
 def mann_whitney_u_test(column1: str, column2: str, alternative: str = 'two-sided') -> dict:
     """
-    Call to perform a Mann-Whitney U test between two independent columns. You don't have to know actual data
-
-    Parameters:
-    - column1 (str): Name of the first column.
-    - column2 (str): Name of the second column.
-    - alternative (str): Defines the alternative hypothesis ('two-sided', 'less', 'greater'). Default is 'two-sided'.
-
-    Returns:
-    - dict: Contains the U statistic, p-value, and a conclusion based on the hypothesis.
+    Call to perform a Mann-Whitney U test between two independent columns. Only use column names from dataset summary
+    to fill function parameters. You can set 'alternative' paramater to set the alternative hypothesis
+    ('two-sided', 'less', 'greater'). Default is 'two-sided'.
     """
     return {
         "U_statistic": 375.0,
@@ -25,15 +19,8 @@ def mann_whitney_u_test(column1: str, column2: str, alternative: str = 'two-side
 @tool
 def kruskal_wallis_test(group_column: str, value_column: str) -> dict:
     """
-    Call to perform a Kruskal-Wallis H-test for independent samples across multiple groups. You don't have to know
-    actual data
-
-    Parameters:
-    - group_column (str): Name of the column that defines the groupings.
-    - value_column (str): Name of the column with values to be compared across groups.
-
-    Returns:
-    - dict: Contains the H statistic, p-value, and a conclusion based on the hypothesis.
+    Call to perform a Kruskal-Wallis H-test for independent samples across multiple groups. Only use column names from
+    dataset summary to fill function parameters
     """
     return {
         "H_statistic": 7.85,
@@ -46,15 +33,9 @@ def kruskal_wallis_test(group_column: str, value_column: str) -> dict:
 @tool
 def wilcoxon_signed_rank_test(column1: str, column2: str, alternative: str = 'two-sided') -> dict:
     """
-    Call to perform a Wilcoxon signed-rank test for two paired samples. You don't have to know actual data
-
-    Parameters:
-    - column1 (str): Name of the first paired column.
-    - column2 (str): Name of the second paired column.
+    Call to perform a Wilcoxon signed-rank test for two paired samples. Only use column names from dataset summary to fill function parameters
+    you have one optional parameter:
     - alternative (str): Defines the alternative hypothesis ('two-sided', 'less', 'greater'). Default is 'two-sided'.
-
-    Returns:
-    - dict: Contains the W statistic, p-value, and a conclusion based on the hypothesis.
     """
     return {
         "W_statistic": 105.0,
@@ -67,14 +48,8 @@ def wilcoxon_signed_rank_test(column1: str, column2: str, alternative: str = 'tw
 @tool
 def friedman_test(group_column: str, value_columns: list[str]) -> dict:
     """
-    Call to perform a Friedman test for repeated measures across multiple conditions. You don't have to know actual data
-
-    Parameters:
-    - group_column (str): Name of the column defining the group or subject identifier.
-    - value_columns (list[str]): List of column names representing the repeated measures or conditions.
-
-    Returns:
-    - dict: Contains the Q statistic, p-value, and a conclusion based on the hypothesis.
+    Call to perform a Friedman test for repeated measures across multiple conditions. Only use column names from
+    dataset summary to fill function parameters
     """
     return {
         "Q": 16.6,

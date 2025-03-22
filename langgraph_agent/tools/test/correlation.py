@@ -4,15 +4,8 @@ from langchain_core.tools import tool
 @tool
 def correlation(column1: str, column2: str, method: str = 'pearson') -> dict:
     """
-    Call to calculate the correlation between two variables. You don't have to know actual data
-
-    Parameters:
-    - column1 (str): Name of the first variable.
-    - column2 (str): Name of the second variable.
-    - method (str): Type of correlation ('pearson', 'spearman', or 'kendall'). Default is 'pearson'.
-
-    Returns:
-    - dict: Contains the correlation coefficient, p-value, and a conclusion on the relationship between the variables.
+    Call to calculate the correlation between two variables. Only use column names from dataset summary to fill function parameters
+    You can change 'method' parameter to set the type of correlation ('pearson', 'spearman', or 'kendall'). Default is 'pearson'.
     """
     return {
         "correlation_coefficient": 0.65,
@@ -26,16 +19,9 @@ def correlation(column1: str, column2: str, method: str = 'pearson') -> dict:
 @tool
 def partial_correlation(target_column: str, control_columns: list, method: str = 'pearson') -> dict:
     """
-    Call to calculate the partial correlation between the target variable and other variables, controlling for the effect of
-    additional variables. You don't have to know actual data
-
-    Parameters:
-    - target_column (str): Name of the target variable.
-    - control_columns (list): List of variable names to control for.
-    - method (str): Type of correlation ('pearson', 'spearman', or 'kendall'). Default is 'pearson'.
-
-    Returns:
-    - dict: Contains the partial correlation coefficient, p-value, and a conclusion about the relationship after controlling for the control variables.
+    Call to calculate the partial correlation between the target variable and other variables.
+    Only use column names from dataset summary to fill function parameters. You can change 'method' parameter to set
+    the type of correlation ('pearson', 'spearman', or 'kendall'). Default is 'pearson'.
     """
     return {
         "partial_correlation_coefficient": 0.45,
@@ -51,14 +37,7 @@ def partial_correlation(target_column: str, control_columns: list, method: str =
 def chi_square_test(column1: str, column2: str) -> dict:
     """
     Call to perform a chi-square test of independence to determine if there is a relationship between two categorical
-    variables. You don't have to know actual data
-
-    Parameters:
-    - column1 (str): Name of the first categorical variable.
-    - column2 (str): Name of the second categorical variable.
-
-    Returns:
-    - dict: Contains the chi-square statistic, p-value, degrees of freedom, and a conclusion on the association between the variables.
+    variables. Only use column names from dataset summary to fill function parameters
     """
     return {
         "chi_square_statistic": 12.34,
@@ -73,14 +52,8 @@ def chi_square_test(column1: str, column2: str) -> dict:
 @tool
 def reliability_analysis(items_columns: list) -> dict:
     """
-    Call to perform a reliability analysis (typically using Cronbach's Alpha) to assess the internal consistency of a
-    set of items. You don't have to know actual data
-
-    Parameters:
-    - items_columns (list): List of item/variable names to assess internal consistency (e.g., survey or test items).
-
-    Returns:
-    - dict: Contains Cronbach's Alpha value, item-total correlations, and a conclusion on the reliability of the scale.
+    Call to perform a reliability analysis to assess the internal consistency of a set of items. Only use column names
+    from dataset summary to fill function parameters
     """
     return {
         "cronbach_alpha": 0.82,
@@ -101,18 +74,9 @@ def exploratory_factor_analysis(columns: list, n_factors: int, method: str = 'pr
                                 rotation: str = 'varimax') -> dict:
     """
     Call to perform exploratory factor analysis (EFA) to identify underlying relationships between measured variables.
-    You don't have to know actual data
-
-    Parameters:
-    - columns (list): List of variable names to be included in the factor analysis.
-    - n_factors (int): Number of factors to extract.
-    - method (str): Extraction method ('principal' for Principal Axis Factoring, 'maximum_likelihood', etc.). Default is
-     'principal'.
-    - rotation (str): Rotation method ('varimax', 'promax', etc.). Default is 'varimax'.
-
-    Returns:
-    - dict: Contains factor loadings, explained variance, communalities, and a conclusion on the underlying structure of
-     the data.
+    Only use column names from dataset summary to fill function parameters. You can set 'method' parameter to set extraction method
+     ('principal' for Principal Axis Factoring, 'maximum_likelihood', etc.). Default is 'principal'.
+    You can set 'rotation' parameter to set rotation method ('varimax', 'promax', etc.). Default is 'varimax'.
     """
     return {
         "factor_loadings": {
